@@ -1,0 +1,360 @@
+part of x509;
+
+class ObjectIdentifier {
+  final List<int> nodes;
+
+  const ObjectIdentifier(this.nodes);
+
+  ObjectIdentifier get parent => nodes.length > 1
+      ? ObjectIdentifier(nodes.take(nodes.length - 1).toList())
+      : null;
+
+  factory ObjectIdentifier.fromAsn1(ASN1ObjectIdentifier id) {
+    var bytes = id.valueBytes();
+    var nodes = <int>[];
+    var v = bytes.first;
+    nodes.add(v ~/ 40);
+    nodes.add(v % 40);
+
+    var w = 0;
+    for (var v in bytes.skip(1)) {
+      if (v >= 128) {
+        w += v - 128;
+        w *= 128;
+      } else {
+        w += v;
+        nodes.add(w);
+        w = 0;
+      }
+    }
+
+    return ObjectIdentifier(nodes);
+  }
+
+  ASN1ObjectIdentifier toAsn1() {
+    var bytes = <int>[];
+    bytes.add(nodes.first * 40 + nodes[1]);
+    for (var v in nodes.skip(2)) {
+      var w = [];
+      while (v > 128) {
+        var u = v % 128;
+        v -= u;
+        v ~/= 128;
+        w.add(u);
+      }
+      w.add(v);
+      bytes.addAll(w.skip(1).toList().reversed.map((v) => v + 128));
+      bytes.add(w.first);
+    }
+    return ASN1ObjectIdentifier(bytes);
+  }
+
+  @override
+  int get hashCode => hashObjects(nodes);
+
+  @override
+  bool operator ==(dynamic other) =>
+      other is ObjectIdentifier && listsEqual(nodes, other.nodes);
+
+  String get name {
+    try {
+      dynamic tree = _tree;
+      for (var n in nodes) {
+        tree = tree[n];
+      }
+      if (tree is Map) return tree[null];
+      return tree;
+    } catch (e) {
+      throw StateError(
+          'Unable to get name of ObjectIdentifier with nodes $nodes');
+    }
+  }
+
+  @override
+  String toString() => '$name';
+
+  static const _tree = {
+    0: {
+      null: 'itu-t',
+      9: {
+        null: 'data',
+        2342: {
+          null: 'pss',
+          19200300: {
+            null: 'ucl',
+            100: {
+              null: 'pilot',
+              1: {
+                null: 'pilotAttributeType',
+                25: {null: 'domainComponent'}
+              }
+            }
+          }
+        }
+      }
+    },
+    1: {
+      null: 'iso',
+      2: {
+        null: 'member-body',
+        40: {
+          10040: {
+            null: 'x9-57',
+            4: {null: 'x9cm', 1: 'dsa'}
+          }
+        },
+        840: {
+          null: 'us',
+          113549: {
+            null: 'rsadsi',
+            1: {
+              null: 'pkcs',
+              11: 'pkcs-11',
+              12: 'pkcs-12',
+              1: {
+                null: 'pkcs-1',
+                1: 'rsaEncryption',
+                2: 'md2withRSAEncryption',
+                4: 'md5withRSAEncryption',
+                5: 'sha1WithRSAEncryption'
+              },
+              9: {
+                null: 'pkcs-9',
+                1: 'emailAddress',
+                2: 'unstructuredName',
+                3: 'contentType',
+                4: 'messageDigest',
+                5: 'signingTime',
+                6: 'countersignature',
+                7: 'challengePassword',
+                8: 'unstructuredAddress',
+                9: 'extendedCertificateAttributes'
+              },
+              3: {null: 'pkcs-3', 1: 'dhKeyAgreement'},
+              7: {
+                null: 'pkcs-7',
+                1: 'data',
+                2: 'signedData',
+                3: 'envelopedData',
+                4: 'signedAndEnvelopedData',
+                5: 'digestData',
+                6: 'encryptedData'
+              }
+            },
+            2: {null: 'digestAlgorithm', 2: 'md2', 4: 'md4', 5: 'md5'},
+            3: {
+              null: 'encryptionAlgorithm',
+              2: 'rc2CBC',
+              4: 'rc4',
+              7: 'DES-EDE3-CBC',
+              8: 'RC5CBC',
+              9: 'RC5CBCPAD',
+              10: 'desCDMF',
+              17: 'des-ede3'
+            },
+            5: {
+              null: 'pkcs-5',
+              1: 'pbeWithMD2AndDES-CBC',
+              3: 'pbeWithMD5AndDES-CBC',
+              11: 'pbeWithSHA1AndRC2-CBC',
+              12: 'pbeWithSHA1AndRC4'
+            },
+            12: {
+              null: 'pkcs-12',
+              1: {
+                null: 'pkcs-12PbeIds',
+                1: 'pbeWithSHA1And128BitRC4',
+                2: 'pbeWithSHA1And40BitRC4',
+                3: 'pbeWithSHA1And3-KeyTripleDES-CBC',
+                4: 'pbeWithSHA1And2-KeyTripleDES-CBC',
+                5: 'pbeWithSHA1And128BitRC2-CBC',
+                6: 'pbeWithSHA1And40BitRC2-CBC'
+              }
+            }
+          },
+          113533: {
+            null: 'nt',
+            7: {
+              null: 'nsn',
+              66: {
+                null: 'algorithms',
+                10: 'cast5CBC',
+                11: 'cast5MAC',
+                12: 'pbeWithMD5AndCAST5-CBC'
+              }
+            }
+          }
+        }
+      },
+      3: {
+        null: 'identified-organization',
+        6: {
+          null: 'dod',
+          1: {
+            null: 'internet',
+            5: {
+              null: 'security',
+              5: {
+                7: {
+                  null: 'pkix',
+                  3: {
+                    null: 'kp',
+                    1: 'serverAuth',
+                    2: 'clientAuth',
+                    3: 'codeSigning',
+                    4: 'emailProtection',
+                    8: 'timeStamping',
+                    9: 'OCSPSigning'
+                  }
+                }
+              }
+            }
+          }
+        },
+        14: {
+          null: 'oiw',
+          3: {
+            null: 'secsig',
+            2: {
+              null: 'algorithm',
+              2: 'md4WithRSA',
+              3: 'md5WithRSA',
+              4: 'md5WithRSAEncryption',
+              6: 'desECB',
+              7: 'desCBC',
+              8: 'desOFB',
+              9: 'desCFB',
+              10: 'desMAC',
+              11: 'RSASignature',
+              12: 'DSA',
+              13: 'DSAWithSHA',
+              14: 'RSAWithmdc2',
+              15: 'RSAWithSHA',
+              16: 'dhWithCommonModulus',
+              17: 'desEDE',
+              18: 'SHA',
+              19: 'mdc-2',
+              20: 'DSACommon',
+              21: 'DSACommonWithSHA',
+              22: 'RSAKeyTransport',
+              23: 'Keyed-hash-seal',
+              24: 'md2WithRSASignature',
+              25: 'md5WithRSASignature',
+              26: 'SHA1',
+              27: 'DSAWithSHA1',
+              28: 'DSACommonWithSHA1',
+              29: 'RSASignatureWithSHA1'
+            }
+          },
+          7: {
+            2: {
+              1: {1: 'elGamal'},
+              3: {1: 'md2WithRsa', 2: 'md2WithElGamal'}
+            }
+          }
+        },
+        36: {
+          null: 'teletrust',
+          3: {
+            null: 'algorithm',
+            2: {
+              null: 'hashAlgorithm',
+              1: 'ripemd160',
+              2: 'ripemd128',
+              3: 'ripemd256'
+            },
+            3: {
+              null: 'signatureAlgorithm',
+              1: {
+                null: 'rsaSignature',
+                2: 'rsaSignatureWithripemd160',
+                3: 'rsaSignatureWithripemd128',
+                4: 'rsaSignatureWithripemd256'
+              }
+            }
+          }
+        }
+      }
+    },
+    2: {
+      null: 'joint-iso-ccitt',
+      5: {
+        null: 'ds',
+        4: {
+          null: 'at',
+          3: 'commanName',
+          4: 'surname',
+          6: 'countryName',
+          7: 'localityName',
+          8: 'stateOrProvinceName',
+          10: 'organizationName',
+          11: 'organizationUnitName',
+          12: 'title',
+          35: 'userPassword',
+          36: 'userCertificate',
+          37: 'cAcertificate',
+          38: 'authorityRecovationList',
+          39: 'certificateRevocationList',
+          40: 'crossCertificatePair',
+          41: 'name',
+          42: 'givenName',
+          43: 'initials',
+          44: 'generationQualifier',
+          46: 'dnQualifier',
+          58: 'attributeCertificate'
+        },
+        8: {
+          null: 'algorithm',
+          1: {null: 'encryptionAlgorithm', 1: 'rsa'},
+          2: 'hashAlgorithm',
+          3: 'signatureAlgorithm'
+        },
+        29: {
+          null: 'ce',
+          9: 'subjectDirectoryAttributes',
+          14: 'subjectKeyIdentifier',
+          15: 'keyUsage',
+          16: 'privateKeyUsagePeriod',
+          17: 'subjectAltName',
+          18: 'issuerAltName',
+          19: 'basicConstraints',
+          20: 'cRLNumber',
+          21: 'reasonCode',
+          23: 'instructionCode',
+          24: 'invalidityDate',
+          27: 'deltaCRLIndicator',
+          28: 'issuingDistributionPoint',
+          29: 'certificateIssuer',
+          30: 'nameConstraints',
+          31: 'cRLDistributionPoints',
+          32: 'certificatePolicies',
+          33: 'policyMappings',
+          35: 'authorityKeyIdentifier',
+          36: 'policyConstraints',
+          37: 'extKeyUsage'
+        }
+      },
+      16: {
+        840: {
+          1: {
+            113730: {
+              null: 'netscape',
+              1: {
+                null: 'netscape-cert-extension',
+                1: 'netscape-cert-extension-type',
+                2: 'netscape-base-url',
+                3: 'netscape-revocation-url',
+                4: 'netscape-ca-revocation-url',
+                7: 'netcape-cert-renewal-url',
+                8: 'netscape-policy-url',
+                12: 'netscape-ssl-server-name',
+                13: 'netscape-comment'
+              },
+              2: {null: 'netscape-data-type', 5: 'netscape-cert-sequence'}
+            }
+          }
+        }
+      }
+    }
+  };
+}
