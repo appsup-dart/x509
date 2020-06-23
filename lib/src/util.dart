@@ -131,6 +131,7 @@ dynamic toDart(ASN1Object obj) {
   if (obj is ASN1PrintableString) return obj.stringValue;
   if (obj is ASN1UtcTime) return obj.dateTimeValue;
   if (obj is ASN1IA5String) return obj.stringValue;
+  if (obj is ASN1UTF8String) return obj.utf8StringValue;
   throw ArgumentError(
       'Cannot convert $obj (${obj.runtimeType}) to dart object.');
 }
