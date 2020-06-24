@@ -1,6 +1,6 @@
 name: x509
 description: Dart library for parsing and working with X.509 certificates.
-version: 0.1.0+1
+version: 0.1.1
 homepage: https://github.com/appsup-dart/x509
 
 environment:
