@@ -5,6 +5,74 @@ import 'package:crypto_keys/crypto_keys.dart';
 
 import '../x509.dart';
 
+ObjectIdentifier _ecParametersFromAsn1(ASN1Object object) {
+  // https://tools.ietf.org/html/rfc5480#section-2.1.1
+  //     ECParameters ::= CHOICE {
+  //       namedCurve         OBJECT IDENTIFIER
+  //       -- implicitCurve   NULL
+  //       -- specifiedCurve  SpecifiedECDomain
+  //     }
+  //       -- implicitCurve and specifiedCurve MUST NOT be used in PKIX.
+  //       -- Details for SpecifiedECDomain can be found in [X9.62].
+  //       -- Any future additions to this CHOICE should be coordinated
+  //       -- with ANSI X9.
+  if (object is ASN1ObjectIdentifier) {
+    return ObjectIdentifier.fromAsn1(object);
+  }
+  return null;
+}
+
+KeyPair ecKeyPairFromAsn1(ASN1Sequence sequence) {
+  // https://tools.ietf.org/html/rfc5915
+  //   ECPrivateKey ::= SEQUENCE {
+  //     version        INTEGER { ecPrivkeyVer1(1) } (ecPrivkeyVer1),
+  //     privateKey     OCTET STRING,
+  //     parameters [0] ECParameters {{ NamedCurve }} OPTIONAL,
+  //     publicKey  [1] BIT STRING OPTIONAL
+  //   }
+  var version = toDart(sequence.elements[0]);
+  if (version != BigInt.one) {
+    throw UnsupportedError('Only `ecPrivkeyVer1` supported.');
+  }
+
+  var privateKey = toBigInt(sequence.elements[1].contentBytes());
+
+  var l = sequence.elements[1].contentBytes().length;
+
+  Identifier curve;
+
+  var i = 2;
+  if (sequence.elements.length > i && sequence.elements[i].tag == 0xa0) {
+    var e = ASN1Parser(sequence.elements[i].valueBytes()).nextObject();
+    var parameters = _ecParametersFromAsn1(e);
+    curve = {
+      'secp256k1': curves.p256k,
+      'prime256v1': curves.p256,
+      'secp384r1': curves.p384,
+      'secp521r1': curves.p521,
+    }[parameters.name];
+    if (curve == null) {
+      throw UnsupportedError('Curves of type ${parameters} not supported');
+    }
+    i++;
+  }
+  curve ??= _lengthToCurve(l);
+
+  var publicKey;
+  if (sequence.elements.length > i && sequence.elements[i].tag == 0xa1) {
+    var e = ASN1Parser(sequence.elements[i].contentBytes()).nextObject()
+        as ASN1BitString;
+    // https://tools.ietf.org/html/rfc5480#section-2.2
+    // ECPoint ::= OCTET STRING
+
+    publicKey = ecPublicKeyFromAsn1(e, curve: curve);
+  }
+
+  return KeyPair(
+      privateKey: EcPrivateKey(eccPrivateKey: privateKey, curve: curve),
+      publicKey: publicKey);
+}
+
 KeyPair rsaKeyPairFromAsn1(ASN1Sequence sequence) {
   // var version = _toDart(sequence.elements[0]).toInt() + 1;
   var modulus = toDart(sequence.elements[1]);
@@ -30,6 +98,33 @@ RsaPublicKey rsaPublicKeyFromAsn1(ASN1Sequence sequence) {
   return RsaPublicKey(modulus: modulus, exponent: exponent);
 }
 
+Identifier _lengthToCurve(int l) {
+  return {
+    32: curves.p256,
+    48: curves.p384,
+    66: curves.p521,
+  }[l];
+}
+
+EcPublicKey ecPublicKeyFromAsn1(ASN1BitString bitString, {Identifier curve}) {
+  var bytes = bitString.contentBytes();
+  var compression = bytes[0];
+  switch (compression) {
+    case 4:
+      // uncompressed
+      var l = (bytes.length - 1) ~/ 2;
+      var x = toBigInt(bytes.sublist(1, l + 1));
+      var y = toBigInt(bytes.sublist(l + 1));
+      return EcPublicKey(
+          xCoordinate: x, yCoordinate: y, curve: curve ?? _lengthToCurve(l));
+    case 2:
+    case 3:
+      throw UnsupportedError('Compressed key not supported');
+    default:
+      throw ArgumentError('Invalid compression value $compression');
+  }
+}
+
 KeyPair keyPairFromAsn1(ASN1BitString data, ObjectIdentifier algorithm) {
   switch (algorithm.name) {
     case 'rsaEncryption':
@@ -46,6 +141,8 @@ PublicKey publicKeyFromAsn1(ASN1BitString data, ObjectIdentifier algorithm) {
     case 'rsaEncryption':
       var s = ASN1Parser(data.contentBytes()).nextObject() as ASN1Sequence;
       return rsaPublicKeyFromAsn1(s);
+    case 'ecPublicKey':
+      return ecPublicKeyFromAsn1(data);
     case 'sha1WithRSAEncryption':
   }
   throw UnimplementedError('Unknown algoritmh $algorithm');

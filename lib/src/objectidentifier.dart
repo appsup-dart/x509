@@ -105,6 +105,25 @@ class ObjectIdentifier {
         },
         840: {
           null: 'us',
+          10045: {
+            null: 'ansi-X9-62',
+            2: {
+              null: 'keyType',
+              1: 'ecPublicKey',
+            },
+            3: {
+              null: 'curves',
+              1: {
+                null: 'prime',
+                2: 'prime192v2',
+                3: 'prime192v3',
+                4: 'prime239v1',
+                5: 'prime239v2',
+                6: 'prime239v3',
+                7: 'prime256v1',
+              }
+            }
+          },
           113549: {
             null: 'rsadsi',
             1: {
@@ -272,6 +291,43 @@ class ObjectIdentifier {
                 4: 'rsaSignatureWithripemd256'
               }
             }
+          }
+        },
+        132: {
+          null: 'certicom',
+          0: {
+            null: 'curve',
+            1: 'sect163k1',
+            2: 'sect163r1',
+            3: 'sect239k1',
+            4: 'sect113r1',
+            5: 'sect113r2',
+            6: 'secp112r1',
+            7: 'secp112r2',
+            8: 'secp160r1',
+            9: 'secp160k1',
+            10: 'secp256k1',
+            15: 'sect163r2',
+            16: 'sect283k1',
+            17: 'sect283r1',
+            22: 'sect131r1',
+            23: 'sect131r2',
+            24: 'sect193r1',
+            25: 'sect193r2',
+            26: 'sect233k1',
+            27: 'sect233r1',
+            28: 'secp128r1',
+            29: 'secp128r2',
+            30: 'secp160r2',
+            31: 'secp192k1',
+            32: 'secp224k1',
+            33: 'secp224r1',
+            34: 'secp384r1',
+            35: 'secp521r1',
+            36: 'sect409k1',
+            37: 'sect409r1',
+            38: 'sect571k1',
+            39: 'sect571r1',
           }
         }
       }

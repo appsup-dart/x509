@@ -224,6 +224,9 @@ Object _parseDer(List<int> bytes, String type) {
     case 'PRIVATE KEY':
       // Private Key file (PKCS#8)
       return PrivateKeyInfo.fromAsn1(s);
+    case 'EC PRIVATE KEY':
+      // EC Private Key file
+      return ecKeyPairFromAsn1(s);
     case 'ENCRYPTED PRIVATE KEY':
       // Encrypted Private Key file (PKCS#8)
       return EncryptedPrivateKeyInfo.fromAsn1(s);
