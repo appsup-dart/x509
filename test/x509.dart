@@ -170,11 +170,8 @@ void main() {
 
       var bytes = f.readAsBytesSync();
 
-      var p = ASN1Parser(bytes);
-      print(p.nextObject());
-
       var c = X509Certificate.fromAsn1(ASN1Parser(bytes).nextObject());
-      print(c);
+      expect(c, isA<X509Certificate>());
     });
   });
 }
