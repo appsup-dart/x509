@@ -97,8 +97,8 @@ class SubjectPublicKeyInfo {
 
   factory SubjectPublicKeyInfo.fromAsn1(ASN1Sequence sequence) {
     final algorithm = AlgorithmIdentifier.fromAsn1(sequence.elements[0]);
-    return SubjectPublicKeyInfo(algorithm,
-        publicKeyFromAsn1(sequence.elements[1], algorithm.algorithm));
+    return SubjectPublicKeyInfo(
+        algorithm, publicKeyFromAsn1(sequence.elements[1], algorithm));
   }
 
   @override

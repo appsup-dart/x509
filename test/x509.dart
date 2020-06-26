@@ -33,6 +33,12 @@ void main() {
           BigInt.parse(
               '33595934851494958356084148292611983061011944871851202520631261652578803383469'));
     });
+    test('parse ec 256k public key', () {
+      var pem = File('test/files/ec256k.pub.key').readAsStringSync();
+      SubjectPublicKeyInfo keyInfo = parsePem(pem).single;
+      var key = keyInfo.subjectPublicKey as EcPublicKey;
+      expect(key.curve, curves.p256k);
+    });
     test('parse ec 256 private key', () {
       var pem = File('test/files/ec256.private.key').readAsStringSync();
       KeyPair keyPair = parsePem(pem).single;

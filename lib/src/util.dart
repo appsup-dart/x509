@@ -1,7 +1,7 @@
 library x509.conversions;
 
 import 'package:asn1lib/asn1lib.dart';
-import 'package:crypto_keys/crypto_keys.dart';
+import 'package:crypto_keys/crypto_keys.dart' hide AlgorithmIdentifier;
 
 import '../x509.dart';
 
@@ -44,16 +44,7 @@ KeyPair ecKeyPairFromAsn1(ASN1Sequence sequence) {
   var i = 2;
   if (sequence.elements.length > i && sequence.elements[i].tag == 0xa0) {
     var e = ASN1Parser(sequence.elements[i].valueBytes()).nextObject();
-    var parameters = _ecParametersFromAsn1(e);
-    curve = {
-      'secp256k1': curves.p256k,
-      'prime256v1': curves.p256,
-      'secp384r1': curves.p384,
-      'secp521r1': curves.p521,
-    }[parameters.name];
-    if (curve == null) {
-      throw UnsupportedError('Curves of type ${parameters} not supported');
-    }
+    curve = _curveObjectIdentifierToIdentifier(_ecParametersFromAsn1(e));
     i++;
   }
   curve ??= _lengthToCurve(l);
@@ -71,6 +62,19 @@ KeyPair ecKeyPairFromAsn1(ASN1Sequence sequence) {
   return KeyPair(
       privateKey: EcPrivateKey(eccPrivateKey: privateKey, curve: curve),
       publicKey: publicKey);
+}
+
+Identifier _curveObjectIdentifierToIdentifier(ObjectIdentifier id) {
+  var curve = {
+    'secp256k1': curves.p256k,
+    'prime256v1': curves.p256,
+    'secp384r1': curves.p384,
+    'secp521r1': curves.p521,
+  }[id.name];
+  if (curve == null) {
+    throw UnsupportedError('Curves of type ${id} not supported');
+  }
+  return curve;
 }
 
 KeyPair rsaKeyPairFromAsn1(ASN1Sequence sequence) {
@@ -136,13 +140,14 @@ KeyPair keyPairFromAsn1(ASN1BitString data, ObjectIdentifier algorithm) {
   throw UnimplementedError('Unknown algoritmh $algorithm');
 }
 
-PublicKey publicKeyFromAsn1(ASN1BitString data, ObjectIdentifier algorithm) {
-  switch (algorithm.name) {
+PublicKey publicKeyFromAsn1(ASN1BitString data, AlgorithmIdentifier algorithm) {
+  switch (algorithm.algorithm.name) {
     case 'rsaEncryption':
       var s = ASN1Parser(data.contentBytes()).nextObject() as ASN1Sequence;
       return rsaPublicKeyFromAsn1(s);
     case 'ecPublicKey':
-      return ecPublicKeyFromAsn1(data);
+      return ecPublicKeyFromAsn1(data,
+          curve: _curveObjectIdentifierToIdentifier(algorithm.parameters));
     case 'sha1WithRSAEncryption':
   }
   throw UnimplementedError('Unknown algoritmh $algorithm');
