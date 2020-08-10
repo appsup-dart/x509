@@ -385,7 +385,7 @@ class ObjectIdentifier {
         null: 'ds',
         4: {
           null: 'at',
-          3: 'commanName',
+          3: 'commonName',
           4: 'surname',
           6: 'countryName',
           7: 'localityName',
