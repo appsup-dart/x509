@@ -60,6 +60,7 @@ class Extension {
 /// The base class for extension values.
 abstract class ExtensionValue {
   static const ceId = ObjectIdentifier([2, 5, 29]);
+  static const peId = ObjectIdentifier([1, 3, 6, 1, 5, 5, 7, 1]);
 
   const ExtensionValue();
 
@@ -75,18 +76,27 @@ abstract class ExtensionValue {
           return SubjectKeyIdentifier.fromAsn1(obj);
         case 15:
           return KeyUsage.fromAsn1(obj);
-        case 32: // TODO: certificate policies extension
+        case 32:
+          return CertificatePolicies.fromAsn1(obj);
+        case 31:
+          return CrlDistributionPoints.fromAsn1(obj);
         case 33: // TODO: policy mappings extension
         case 17: // TODO: subject alternative name extension
         case 18: // TODO: issuer alternative name extension
         case 9: // TODO: subject directory attributes extension
         case 30: // TODO: name constraints extension
         case 36: // TODO: policy constraints extension
-          throw UnimplementedError();
+          break;
         case 19:
           return BasicConstraints.fromAsn1(obj);
         case 37:
           return ExtendedKeyUsage.fromAsn1(obj);
+      }
+    }
+    if (id.parent == peId) {
+      switch (id.nodes.last) {
+        case 1:
+          return AuthorityInformationAccess.fromAsn1(obj);
       }
     }
     throw UnimplementedError(
@@ -272,7 +282,7 @@ class ExtendedKeyUsage extends ExtensionValue {
   const ExtendedKeyUsage(this.ids);
 
   factory ExtendedKeyUsage.fromAsn1(ASN1Sequence sequence) {
-    return ExtendedKeyUsage(toDart(sequence));
+    return ExtendedKeyUsage((toDart(sequence) as List).cast());
   }
 
   @override
@@ -313,4 +323,261 @@ class BasicConstraints extends ExtensionValue {
         "CA:${"$cA".toUpperCase()}"
         // TODO: path length constraint
       ].join(',');
+}
+
+/// The certificate policies extension contains a sequence of one or more policy
+/// information terms, each of which consists of an object identifier (OID) and
+/// optional qualifiers.
+class CertificatePolicies extends ExtensionValue {
+  final List<PolicyInformation> policies;
+
+  CertificatePolicies({this.policies});
+
+  /// Creates a certificate policies extension value from an [ASN1Sequence].
+  ///
+  /// The ASN.1 definition is:
+  ///
+  ///   CertificatePolicies ::= SEQUENCE SIZE (1..MAX) OF PolicyInformation
+  factory CertificatePolicies.fromAsn1(ASN1Sequence sequence) {
+    return CertificatePolicies(policies: [
+      for (var e in sequence.elements) PolicyInformation.fromAsn1(e)
+    ]);
+  }
+
+  @override
+  String toString([String prefix = '']) =>
+      policies.map((p) => p.toString(prefix)).join('\n');
+}
+
+class PolicyInformation {
+  final ObjectIdentifier policyIdentifier;
+
+  final List<PolicyQualifierInfo> policyQualifiers;
+
+  PolicyInformation({this.policyIdentifier, this.policyQualifiers});
+
+  /// The ASN.1 definition is:
+  ///
+  ///   PolicyInformation ::= SEQUENCE {
+  ///     policyIdentifier   CertPolicyId,
+  ///     policyQualifiers   SEQUENCE SIZE (1..MAX) OF PolicyQualifierInfo OPTIONAL }
+  factory PolicyInformation.fromAsn1(ASN1Sequence sequence) {
+    var policyIdentifier = toDart(sequence.elements[0]);
+    var policyQualifiers = <PolicyQualifierInfo>[];
+    if (sequence.elements.length > 1) {
+      policyQualifiers.addAll((sequence.elements[1] as ASN1Sequence)
+          .elements
+          .map((e) => PolicyQualifierInfo.fromAsn1(e)));
+    }
+    return PolicyInformation(
+        policyIdentifier: policyIdentifier, policyQualifiers: policyQualifiers);
+  }
+
+  @override
+  String toString([String prefix = '']) {
+    var buffer = StringBuffer();
+    buffer.writeln('${prefix}Policy: $policyIdentifier');
+    buffer.writeln(
+        policyQualifiers.map((q) => q.toString('${prefix}\t')).join('\n'));
+    return buffer.toString();
+  }
+}
+
+class PolicyQualifierInfo {
+  final ObjectIdentifier policyQualifierId;
+
+  final String cpsUri;
+
+  final UserNotice userNotice;
+
+  PolicyQualifierInfo({this.policyQualifierId, this.cpsUri, this.userNotice});
+
+  /// The ASN.1 definition is:
+  ///
+  ///   PolicyQualifierInfo ::= SEQUENCE {
+  ///     policyQualifierId  PolicyQualifierId,
+  ///     qualifier          ANY DEFINED BY policyQualifierId }
+  factory PolicyQualifierInfo.fromAsn1(ASN1Sequence sequence) {
+    var policyQualifierId = toDart(sequence.elements[0]) as ObjectIdentifier;
+
+    switch (policyQualifierId.nodes.last) {
+      case 1: // cps
+        var cpsUri = toDart(sequence.elements[1]);
+        return PolicyQualifierInfo(
+            policyQualifierId: policyQualifierId, cpsUri: cpsUri);
+      case 2: // unotice
+        return PolicyQualifierInfo(
+            policyQualifierId: policyQualifierId,
+            userNotice: UserNotice.fromAsn1(sequence.elements[1]));
+    }
+    throw UnsupportedError(
+        'Policy qualifier id $policyQualifierId not supported');
+  }
+
+  @override
+  String toString([String prefix = '']) {
+    switch (policyQualifierId.nodes.last) {
+      case 1: // cps
+        return '${prefix}CPS: $cpsUri';
+      case 2: // unotice
+        return '${prefix}User Notice:\n'
+            '${userNotice.toString('${prefix}\t')}';
+    }
+    throw UnsupportedError(
+        'Policy qualifier id $policyQualifierId not supported');
+  }
+}
+
+class UserNotice {
+  final NoticeReference noticeRef;
+  final String explicitText;
+
+  UserNotice({this.noticeRef, this.explicitText});
+
+  /// The ASN.1 definition is:
+  ///
+  ///   UserNotice ::= SEQUENCE {
+  ///     noticeRef        NoticeReference OPTIONAL,
+  ///     explicitText     DisplayText OPTIONAL }
+  factory UserNotice.fromAsn1(ASN1Sequence sequence) {
+    var noticeRef, explicitText;
+    for (var e in sequence.elements) {
+      if (e is ASN1Sequence) {
+        noticeRef = NoticeReference.fromAsn1(e);
+      } else {
+        explicitText = toDart(e);
+      }
+    }
+    return UserNotice(noticeRef: noticeRef, explicitText: explicitText);
+  }
+
+  @override
+  String toString([String prefix = '']) {
+    var buffer = StringBuffer();
+    if (explicitText != null) {
+      buffer.writeln('${prefix}Explicit Text: $explicitText');
+    }
+    if (noticeRef != null) {
+      buffer.writeln('${prefix}Notice Reference: $noticeRef');
+    }
+    return buffer.toString();
+  }
+}
+
+class NoticeReference {
+  final String organization;
+
+  final List<int> noticeNumbers;
+
+  NoticeReference({this.organization, this.noticeNumbers});
+
+  /// The ASN.1 definition is:
+  ///
+  ///   NoticeReference ::= SEQUENCE {
+  ///     organization     DisplayText,
+  ///     noticeNumbers    SEQUENCE OF INTEGER }
+  factory NoticeReference.fromAsn1(ASN1Sequence sequence) {
+    return NoticeReference(
+        organization: toDart(sequence.elements[0]),
+        noticeNumbers: toDart(sequence.elements[1]));
+  }
+
+  @override
+  String toString() => '$organization $noticeNumbers';
+}
+
+/// The CRL distribution points extension identifies how CRL information is
+/// obtained.
+class CrlDistributionPoints extends ExtensionValue {
+  final List<DistributionPoint> points;
+  CrlDistributionPoints({this.points});
+
+  /// The ASN.1 definition is:
+  ///
+  ///   CRLDistributionPoints ::= SEQUENCE SIZE (1..MAX) OF DistributionPoint
+  factory CrlDistributionPoints.fromAsn1(ASN1Sequence sequence) {
+    return CrlDistributionPoints(points: [
+      for (var e in sequence.elements) DistributionPoint.fromAsn1(e)
+    ]);
+  }
+}
+
+class DistributionPoint {
+  final String name;
+  final List<DistributionPointReason> reasons;
+  final String crlIssuer;
+
+  DistributionPoint({this.name, this.reasons, this.crlIssuer});
+
+  /// The ASN.1 definition is:
+  ///
+  ///   DistributionPoint ::= SEQUENCE {
+  ///     distributionPoint       [0]     DistributionPointName OPTIONAL,
+  ///     reasons                 [1]     ReasonFlags OPTIONAL,
+  ///     cRLIssuer               [2]     GeneralNames OPTIONAL }
+  factory DistributionPoint.fromAsn1(ASN1Sequence sequence) {
+    var name = sequence.elements.isEmpty ? null : toDart(sequence.elements[0]);
+    var reasons = sequence.elements.length <= 1
+        ? null
+        : (sequence.elements[1] as ASN1BitString)
+            .valueBytes()
+            .map((v) => DistributionPointReason.values[v])
+            .toList();
+
+    var crlIssuer =
+        sequence.elements.length <= 2 ? null : toDart(sequence.elements[2]);
+    return DistributionPoint(
+        name: name, reasons: reasons, crlIssuer: crlIssuer);
+  }
+}
+
+enum DistributionPointReason {
+  unused,
+  keyCompromise,
+  cACompromise,
+  affiliationChanged,
+  superseded,
+  cessationOfOperation,
+  certificateHold,
+  privilegeWithdrawn,
+  aACompromise
+}
+
+/// The authority information access extension indicates how to access
+/// information and services for the issuer of the certificate in which
+/// the extension appears.
+///
+/// Information and services may include on-line validation services and CA
+/// policy data.
+class AuthorityInformationAccess extends ExtensionValue {
+  final List<AccessDescription> descriptions;
+
+  AuthorityInformationAccess({this.descriptions});
+
+  /// The ASN.1 definition is:
+  ///
+  ///   AuthorityInfoAccessSyntax  ::=
+  ///     SEQUENCE SIZE (1..MAX) OF AccessDescription
+  factory AuthorityInformationAccess.fromAsn1(ASN1Sequence sequence) {
+    return AuthorityInformationAccess(descriptions: [
+      for (var e in sequence.elements) AccessDescription.fromAsn1(e)
+    ]);
+  }
+}
+
+class AccessDescription {
+  final ObjectIdentifier accessMethod;
+  final String accessLocation;
+
+  AccessDescription({this.accessLocation, this.accessMethod});
+
+  /// The ASN.1 definition is:
+  ///   AccessDescription  ::=  SEQUENCE {
+  ///     accessMethod          OBJECT IDENTIFIER,
+  ///     accessLocation        GeneralName  }
+  factory AccessDescription.fromAsn1(ASN1Sequence sequence) {
+    return AccessDescription(
+        accessMethod: toDart(sequence.elements[0]),
+        accessLocation: toDart(sequence.elements[1]));
+  }
 }

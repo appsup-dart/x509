@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.3
+
+- Support for CertificatePolicies, CrlDistributionPoints and AuthorityInformationAccess extensions
+
 ## 0.1.2
 
 - Support for EC keys

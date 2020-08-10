@@ -216,6 +216,53 @@ class ObjectIdentifier {
               5: {
                 7: {
                   null: 'pkix',
+                  1: {
+                    null: 'pe',
+                    1: 'authorityInfoAccess',
+                    2: 'biometricInfo',
+                    3: 'qcStatements',
+                    4: 'auditIdentity',
+                    5: 'id-pe-acTargeting',
+                    6: 'aaControls',
+                    7: {
+                      null: 'id-pe-ipAddrBlocks',
+                      1: 'id-acTemplate',
+                      2: 'id-openPGPCertTemplateExt'
+                    },
+                    8: 'id-pe-autonomousSysIds',
+                    9: 'id-pe-sbgp-routerIdentifier',
+                    10: 'proxying',
+                    11: 'subjectInfoAccess',
+                    12: 'id-pe-logotype',
+                    13: 'id-pe-wlanSSID',
+                    14: 'id-pe-proxyCertInfo',
+                    15: 'id-pe-acPolicies',
+                    16: 'id-pe-warranty-extn',
+                    17: 'id-pe-sim',
+                    18: 'id-pe-cmsContentConstraints',
+                    19: 'id-pe-otherCerts',
+                    20: 'id-pe-wrappedApexContinKey',
+                    21: 'id-pe-clearanceConstraints',
+                    22: 'id-pe-skiSemantics',
+                    23: 'id-pe-nsa',
+                    24: 'ext-TLSFeatures',
+                    25: 'id-pe-mud-url',
+                    26: 'id-pe-TNAuthList',
+                    27: 'id-pe-JWTClaimConstraints',
+                    28: 'id-pe-ipAddrBlocks-v2',
+                    29: 'id-pe-autonomousSysIds-v2',
+                    30: 'id-pe-mudsigner',
+                    31: 'id-pe-acmeIdentifier',
+                    32: 'id-pe-masa-url',
+                  },
+                  2: {
+                    null: 'qt',
+                    1: 'cps',
+                    2: 'unotice',
+                    3: 'id-qt-textNotice',
+                    4: 'id-qt-acps',
+                    5: 'id-qt-acunotice'
+                  },
                   3: {
                     null: 'kp',
                     1: 'serverAuth',
@@ -408,6 +455,28 @@ class ObjectIdentifier {
               },
               2: {null: 'netscape-data-type', 5: 'netscape-cert-sequence'}
             }
+          }
+        }
+      },
+      23: {
+        null: 'international-organizations',
+        140: {
+          null: 'ca-browser-forum',
+          1: {
+            null: 'certificate-policies',
+            1: 'ev-guidelines',
+            2: {
+              null: 'baseline-requirements',
+              1: 'domain-validated',
+              2: 'organization-validated',
+              3: 'individual-validated'
+            },
+            3: '3',
+            4: {
+              null: 'code-signing-requirements',
+              1: 'code-signing',
+            },
+            31: '31'
           }
         }
       }

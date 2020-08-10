@@ -179,5 +179,12 @@ void main() {
       var c = X509Certificate.fromAsn1(ASN1Parser(bytes).nextObject());
       expect(c, isA<X509Certificate>());
     });
+    test('Apple certificate for server-based Game Center verification', () {
+      var f = File('test/resources/3rd-party-auth-prod-19824d.cer');
+
+      var bytes = f.readAsBytesSync();
+      var c = X509Certificate.fromAsn1(ASN1Parser(bytes).nextObject());
+      expect(c, isA<X509Certificate>());
+    });
   });
 }

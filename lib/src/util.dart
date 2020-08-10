@@ -1,5 +1,7 @@
 library x509.conversions;
 
+import 'dart:convert';
+
 import 'package:asn1lib/asn1lib.dart';
 import 'package:crypto_keys/crypto_keys.dart' hide AlgorithmIdentifier;
 
@@ -234,6 +236,12 @@ dynamic toDart(ASN1Object obj) {
   if (obj is ASN1UtcTime) return obj.dateTimeValue;
   if (obj is ASN1IA5String) return obj.stringValue;
   if (obj is ASN1UTF8String) return obj.utf8StringValue;
+  switch (obj.tag) {
+    case 0xa0:
+      return toDart(ASN1Parser(obj.valueBytes()).nextObject());
+    case 0x86:
+      return utf8.decode(obj.valueBytes());
+  }
   throw ArgumentError(
       'Cannot convert $obj (${obj.runtimeType}) to dart object.');
 }
