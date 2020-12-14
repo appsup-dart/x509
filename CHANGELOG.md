@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.1.4
+- Bump `asn1lib` to 0.8.1.
+
 ## 0.1.3
 
 - Support for CertificatePolicies, CrlDistributionPoints and AuthorityInformationAccess extensions
