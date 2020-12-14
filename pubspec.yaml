@@ -4,10 +4,10 @@ version: 0.1.3
 homepage: https://github.com/appsup-dart/x509
 
 environment:
-  sdk: '>=2.6.0 <3.0.0'
+  sdk: ">=2.6.0 <3.0.0"
 
 dependencies:
-  asn1lib: ^0.6.0
+  asn1lib: ^0.8.1
   quiver: ^2.0.0
   crypto_keys: ^0.1.3
 
