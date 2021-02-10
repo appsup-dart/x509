@@ -12,7 +12,7 @@ class Extension {
   ///  that contains information that it cannot process.  A non-critical
   ///  extension MAY be ignored if it is not recognized, but MUST be
   ///  processed if it is recognized.
-  final bool isCritical;
+  final bool? isCritical;
 
   /// The extension's value.
   final ExtensionValue extnValue;
@@ -33,7 +33,7 @@ class Extension {
   ///   }
   factory Extension.fromAsn1(ASN1Sequence sequence) {
     var id = toDart(sequence.elements[0]);
-    var critical = false;
+    bool? critical = false;
     var octetIndex = 1;
     if (sequence.elements.length > 2) {
       critical = toDart(sequence.elements[1]);
@@ -43,7 +43,7 @@ class Extension {
         id,
         critical,
         ExtensionValue.fromAsn1(
-            ASN1Parser(sequence.elements[octetIndex].contentBytes())
+            ASN1Parser(sequence.elements[octetIndex].contentBytes()!)
                 .nextObject(),
             id));
   }
@@ -51,7 +51,7 @@ class Extension {
   @override
   String toString([String prefix = '']) {
     var buffer = StringBuffer();
-    buffer.writeln("${prefix}$extnId: ${isCritical ? "critical" : ""}");
+    buffer.writeln("${prefix}$extnId: ${isCritical! ? "critical" : ""}");
     buffer.writeln('${prefix}\t$extnValue');
     return buffer.toString();
   }
@@ -71,15 +71,15 @@ abstract class ExtensionValue {
     if (id.parent == ceId) {
       switch (id.nodes.last) {
         case 35:
-          return AuthorityKeyIdentifier.fromAsn1(obj);
+          return AuthorityKeyIdentifier.fromAsn1(obj as ASN1Sequence);
         case 14:
           return SubjectKeyIdentifier.fromAsn1(obj);
         case 15:
-          return KeyUsage.fromAsn1(obj);
+          return KeyUsage.fromAsn1(obj as ASN1BitString);
         case 32:
-          return CertificatePolicies.fromAsn1(obj);
+          return CertificatePolicies.fromAsn1(obj as ASN1Sequence);
         case 31:
-          return CrlDistributionPoints.fromAsn1(obj);
+          return CrlDistributionPoints.fromAsn1(obj as ASN1Sequence);
         case 33: // TODO: policy mappings extension
         case 17: // TODO: subject alternative name extension
         case 18: // TODO: issuer alternative name extension
@@ -88,15 +88,15 @@ abstract class ExtensionValue {
         case 36: // TODO: policy constraints extension
           break;
         case 19:
-          return BasicConstraints.fromAsn1(obj);
+          return BasicConstraints.fromAsn1(obj as ASN1Sequence);
         case 37:
-          return ExtendedKeyUsage.fromAsn1(obj);
+          return ExtendedKeyUsage.fromAsn1(obj as ASN1Sequence);
       }
     }
     if (id.parent == peId) {
       switch (id.nodes.last) {
         case 1:
-          return AuthorityInformationAccess.fromAsn1(obj);
+          return AuthorityInformationAccess.fromAsn1(obj as ASN1Sequence);
       }
     }
     throw UnimplementedError(
@@ -109,9 +109,9 @@ abstract class ExtensionValue {
 /// The authority key identifier extension provides a means of identifying the
 /// public key corresponding to the private key used to sign a certificate.
 class AuthorityKeyIdentifier extends ExtensionValue {
-  final List<int> keyIdentifier;
+  final List<int>? keyIdentifier;
   final authorityCertIssuer;
-  final BigInt authorityCertSerialNumber;
+  final BigInt? authorityCertSerialNumber;
 
   AuthorityKeyIdentifier(this.keyIdentifier, this.authorityCertIssuer,
       this.authorityCertSerialNumber);
@@ -137,8 +137,8 @@ class AuthorityKeyIdentifier extends ExtensionValue {
           issuer = o;
           break;
         case 2:
-          number = (ASN1Parser(List.from(o.encodedBytes)..[0] = 2).nextObject()
-                  as ASN1Integer)
+          number = (ASN1Parser(List.from(o.encodedBytes) as Uint8List..[0] = 2)
+                  .nextObject() as ASN1Integer)
               .valueAsBigInteger;
       }
     }
@@ -149,7 +149,7 @@ class AuthorityKeyIdentifier extends ExtensionValue {
 /// The subject key identifier extension provides a means of identifying
 /// certificates that contain a particular public key.
 class SubjectKeyIdentifier extends ExtensionValue {
-  final List<int> keyIdentifier;
+  final List<int>? keyIdentifier;
 
   SubjectKeyIdentifier(this.keyIdentifier);
 
@@ -165,7 +165,7 @@ class KeyUsage extends ExtensionValue {
   /// other than signatures on certificates and CRLs, such as those used in an
   /// entity authentication service, a data origin authentication service,
   /// and/or an integrity service.
-  final bool digitalSignature;
+  final bool? digitalSignature;
 
   /// True when the subject public key is used to verify digital signatures,
   /// other than signatures on certificates and CRLs, used to provide a
@@ -175,7 +175,7 @@ class KeyUsage extends ExtensionValue {
   ///
   /// Note that recent editions of X.509 have renamed the nonRepudiation bit to
   /// contentCommitment.
-  final bool nonRepudiation;
+  final bool? nonRepudiation;
 
   /// True when the subject public key is used for enciphering private or secret
   /// keys, i.e., for key transport.
@@ -183,7 +183,7 @@ class KeyUsage extends ExtensionValue {
   /// For example, this bit shall be set when an RSA public key is to be used
   /// for encrypting a symmetric content-decryption key or an asymmetric private
   /// key.
-  final bool keyEncipherment;
+  final bool? keyEncipherment;
 
   /// True when the subject public key is used for directly enciphering raw user
   /// data without the use of an intermediate symmetric cipher.
@@ -191,32 +191,32 @@ class KeyUsage extends ExtensionValue {
   /// Note that the use of this bit is extremely uncommon; almost all
   /// applications use key transport or key agreement to establish a symmetric
   /// key.
-  final bool dataEncipherment;
+  final bool? dataEncipherment;
 
   /// True when the subject public key is used for key agreement.
   ///
   /// For example, when a Diffie-Hellman key is to be used for key management,
   /// then this bit is set.
-  final bool keyAgreement;
+  final bool? keyAgreement;
 
   /// True when the subject public key is used for verifying signatures on
   /// public key certificates.
   ///
   /// If the keyCertSign bit is asserted, then the cA bit in the basic
   /// constraints extension MUST also be asserted.
-  final bool keyCertSign;
+  final bool? keyCertSign;
 
   /// True when the subject public key is used for verifying signatures on
   /// certificate revocation lists (e.g., CRLs, delta CRLs, or ARLs).
-  final bool cRLSign;
+  final bool? cRLSign;
 
   /// When true (and the keyAgreement bit is also set), the subject public key
   /// may be used only for enciphering data while performing key agreement.
-  final bool encipherOnly;
+  final bool? encipherOnly;
 
   /// When true (and the keyAgreement bit is also set), the subject public key
   /// may be used only for deciphering data while performing key agreement.
-  final bool decipherOnly;
+  final bool? decipherOnly;
 
   const KeyUsage(
       {this.digitalSignature,
@@ -268,7 +268,7 @@ class KeyUsage extends ExtensionValue {
 
   @override
   String toString() => [
-        digitalSignature ? 'Digital Signature' : null
+        digitalSignature! ? 'Digital Signature' : null
         // TODO others
       ].where((v) => v != null).join(',');
 }
@@ -293,8 +293,8 @@ class ExtendedKeyUsage extends ExtensionValue {
 /// certificate is a CA and the maximum depth of valid certification paths
 /// that include this certificate.
 class BasicConstraints extends ExtensionValue {
-  final bool cA;
-  final int pathLenConstraint;
+  final bool? cA;
+  final int? pathLenConstraint;
 
   BasicConstraints({this.cA = false, this.pathLenConstraint});
 
@@ -306,16 +306,16 @@ class BasicConstraints extends ExtensionValue {
   ///       cA                      BOOLEAN DEFAULT FALSE,
   ///       pathLenConstraint       INTEGER (0..MAX) OPTIONAL }
   factory BasicConstraints.fromAsn1(ASN1Sequence sequence) {
-    var cA = false, len;
+    bool? cA = false, len;
     for (var o in sequence.elements) {
       if (o is ASN1Boolean) {
         cA = o.booleanValue;
       }
       if (o is ASN1Integer) {
-        len = o.intValue;
+        len = o.intValue as bool?;
       }
     }
-    return BasicConstraints(cA: cA, pathLenConstraint: len);
+    return BasicConstraints(cA: cA, pathLenConstraint: len as int?);
   }
 
   @override
@@ -329,7 +329,7 @@ class BasicConstraints extends ExtensionValue {
 /// information terms, each of which consists of an object identifier (OID) and
 /// optional qualifiers.
 class CertificatePolicies extends ExtensionValue {
-  final List<PolicyInformation> policies;
+  final List<PolicyInformation>? policies;
 
   CertificatePolicies({this.policies});
 
@@ -340,19 +340,20 @@ class CertificatePolicies extends ExtensionValue {
   ///   CertificatePolicies ::= SEQUENCE SIZE (1..MAX) OF PolicyInformation
   factory CertificatePolicies.fromAsn1(ASN1Sequence sequence) {
     return CertificatePolicies(policies: [
-      for (var e in sequence.elements) PolicyInformation.fromAsn1(e)
+      for (var e in sequence.elements)
+        PolicyInformation.fromAsn1(e as ASN1Sequence)
     ]);
   }
 
   @override
   String toString([String prefix = '']) =>
-      policies.map((p) => p.toString(prefix)).join('\n');
+      policies!.map((p) => p.toString(prefix)).join('\n');
 }
 
 class PolicyInformation {
-  final ObjectIdentifier policyIdentifier;
+  final ObjectIdentifier? policyIdentifier;
 
-  final List<PolicyQualifierInfo> policyQualifiers;
+  final List<PolicyQualifierInfo>? policyQualifiers;
 
   PolicyInformation({this.policyIdentifier, this.policyQualifiers});
 
@@ -367,7 +368,7 @@ class PolicyInformation {
     if (sequence.elements.length > 1) {
       policyQualifiers.addAll((sequence.elements[1] as ASN1Sequence)
           .elements
-          .map((e) => PolicyQualifierInfo.fromAsn1(e)));
+          .map((e) => PolicyQualifierInfo.fromAsn1(e as ASN1Sequence)));
     }
     return PolicyInformation(
         policyIdentifier: policyIdentifier, policyQualifiers: policyQualifiers);
@@ -378,17 +379,17 @@ class PolicyInformation {
     var buffer = StringBuffer();
     buffer.writeln('${prefix}Policy: $policyIdentifier');
     buffer.writeln(
-        policyQualifiers.map((q) => q.toString('${prefix}\t')).join('\n'));
+        policyQualifiers!.map((q) => q.toString('${prefix}\t')).join('\n'));
     return buffer.toString();
   }
 }
 
 class PolicyQualifierInfo {
-  final ObjectIdentifier policyQualifierId;
+  final ObjectIdentifier? policyQualifierId;
 
-  final String cpsUri;
+  final String? cpsUri;
 
-  final UserNotice userNotice;
+  final UserNotice? userNotice;
 
   PolicyQualifierInfo({this.policyQualifierId, this.cpsUri, this.userNotice});
 
@@ -408,7 +409,8 @@ class PolicyQualifierInfo {
       case 2: // unotice
         return PolicyQualifierInfo(
             policyQualifierId: policyQualifierId,
-            userNotice: UserNotice.fromAsn1(sequence.elements[1]));
+            userNotice:
+                UserNotice.fromAsn1(sequence.elements[1] as ASN1Sequence));
     }
     throw UnsupportedError(
         'Policy qualifier id $policyQualifierId not supported');
@@ -416,12 +418,12 @@ class PolicyQualifierInfo {
 
   @override
   String toString([String prefix = '']) {
-    switch (policyQualifierId.nodes.last) {
+    switch (policyQualifierId!.nodes.last) {
       case 1: // cps
         return '${prefix}CPS: $cpsUri';
       case 2: // unotice
         return '${prefix}User Notice:\n'
-            '${userNotice.toString('${prefix}\t')}';
+            '${userNotice?.toString('${prefix}\t')}';
     }
     throw UnsupportedError(
         'Policy qualifier id $policyQualifierId not supported');
@@ -429,8 +431,8 @@ class PolicyQualifierInfo {
 }
 
 class UserNotice {
-  final NoticeReference noticeRef;
-  final String explicitText;
+  final NoticeReference? noticeRef;
+  final String? explicitText;
 
   UserNotice({this.noticeRef, this.explicitText});
 
@@ -465,9 +467,9 @@ class UserNotice {
 }
 
 class NoticeReference {
-  final String organization;
+  final String? organization;
 
-  final List<int> noticeNumbers;
+  final List<int>? noticeNumbers;
 
   NoticeReference({this.organization, this.noticeNumbers});
 
@@ -489,7 +491,7 @@ class NoticeReference {
 /// The CRL distribution points extension identifies how CRL information is
 /// obtained.
 class CrlDistributionPoints extends ExtensionValue {
-  final List<DistributionPoint> points;
+  final List<DistributionPoint>? points;
   CrlDistributionPoints({this.points});
 
   /// The ASN.1 definition is:
@@ -497,15 +499,16 @@ class CrlDistributionPoints extends ExtensionValue {
   ///   CRLDistributionPoints ::= SEQUENCE SIZE (1..MAX) OF DistributionPoint
   factory CrlDistributionPoints.fromAsn1(ASN1Sequence sequence) {
     return CrlDistributionPoints(points: [
-      for (var e in sequence.elements) DistributionPoint.fromAsn1(e)
+      for (var e in sequence.elements)
+        DistributionPoint.fromAsn1(e as ASN1Sequence)
     ]);
   }
 }
 
 class DistributionPoint {
-  final String name;
-  final List<DistributionPointReason> reasons;
-  final String crlIssuer;
+  final String? name;
+  final List<DistributionPointReason>? reasons;
+  final String? crlIssuer;
 
   DistributionPoint({this.name, this.reasons, this.crlIssuer});
 
@@ -550,7 +553,7 @@ enum DistributionPointReason {
 /// Information and services may include on-line validation services and CA
 /// policy data.
 class AuthorityInformationAccess extends ExtensionValue {
-  final List<AccessDescription> descriptions;
+  final List<AccessDescription>? descriptions;
 
   AuthorityInformationAccess({this.descriptions});
 
@@ -560,14 +563,15 @@ class AuthorityInformationAccess extends ExtensionValue {
   ///     SEQUENCE SIZE (1..MAX) OF AccessDescription
   factory AuthorityInformationAccess.fromAsn1(ASN1Sequence sequence) {
     return AuthorityInformationAccess(descriptions: [
-      for (var e in sequence.elements) AccessDescription.fromAsn1(e)
+      for (var e in sequence.elements)
+        AccessDescription.fromAsn1(e as ASN1Sequence)
     ]);
   }
 }
 
 class AccessDescription {
-  final ObjectIdentifier accessMethod;
-  final String accessLocation;
+  final ObjectIdentifier? accessMethod;
+  final String? accessLocation;
 
   AccessDescription({this.accessLocation, this.accessMethod});
 

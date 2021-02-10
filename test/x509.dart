@@ -10,8 +10,8 @@ void main() {
     test('parse key', () {
       var pem = File('test/files/rsa.key').readAsStringSync();
       KeyPair keyPair = parsePem(pem).single;
-      RsaPrivateKey privateKey = keyPair.privateKey;
-      RsaPublicKey publicKey = keyPair.publicKey;
+      RsaPrivateKey privateKey = keyPair.privateKey as RsaPrivateKey;
+      RsaPublicKey publicKey = keyPair.publicKey as RsaPublicKey;
       expect(privateKey.firstPrimeFactor, isNotNull);
       expect(privateKey.secondPrimeFactor, isNotNull);
       expect(privateKey.privateExponent, isNotNull);
@@ -100,18 +100,18 @@ void main() {
 
       KeyPair keyPair = parsePem(pem).single;
 
-      EcPrivateKey privateKey = keyPair.privateKey;
-      EcPublicKey publicKey = keyPair.publicKey;
+      EcPrivateKey privateKey = keyPair.privateKey as EcPrivateKey;
+      EcPublicKey publicKey = keyPair.publicKey as EcPublicKey;
       expect(privateKey.eccPrivateKey, isNotNull);
       expect(privateKey.curve, curves.p256);
       expect(publicKey.curve, curves.p256);
       expect(publicKey.xCoordinate, isNotNull);
       expect(publicKey.yCoordinate, isNotNull);
-      var signature = keyPair.privateKey
+      var signature = keyPair.privateKey!
           .createSigner(algorithms.signing.ecdsa.sha256)
           .sign('hello world'.codeUnits);
 
-      var verified = keyPair.publicKey
+      var verified = keyPair.publicKey!
           .createVerifier(algorithms.signing.ecdsa.sha256)
           .verify(Uint8List.fromList('hello world'.codeUnits), signature);
 
@@ -122,18 +122,18 @@ void main() {
 
       KeyPair keyPair = parsePem(pem).single;
 
-      EcPrivateKey privateKey = keyPair.privateKey;
-      EcPublicKey publicKey = keyPair.publicKey;
+      EcPrivateKey privateKey = keyPair.privateKey as EcPrivateKey;
+      EcPublicKey publicKey = keyPair.publicKey as EcPublicKey;
       expect(privateKey.eccPrivateKey, isNotNull);
       expect(privateKey.curve, curves.p256k);
       expect(publicKey.curve, curves.p256k);
       expect(publicKey.xCoordinate, isNotNull);
       expect(publicKey.yCoordinate, isNotNull);
-      var signature = keyPair.privateKey
+      var signature = keyPair.privateKey!
           .createSigner(algorithms.signing.ecdsa.sha256)
           .sign('hello world'.codeUnits);
 
-      var verified = keyPair.publicKey
+      var verified = keyPair.publicKey!
           .createVerifier(algorithms.signing.ecdsa.sha256)
           .verify(Uint8List.fromList('hello world'.codeUnits), signature);
 
@@ -144,18 +144,18 @@ void main() {
 
       KeyPair keyPair = parsePem(pem).single;
 
-      EcPrivateKey privateKey = keyPair.privateKey;
-      EcPublicKey publicKey = keyPair.publicKey;
+      EcPrivateKey privateKey = keyPair.privateKey as EcPrivateKey;
+      EcPublicKey publicKey = keyPair.publicKey as EcPublicKey;
       expect(privateKey.eccPrivateKey, isNotNull);
       expect(privateKey.curve, curves.p384);
       expect(publicKey.curve, curves.p384);
       expect(publicKey.xCoordinate, isNotNull);
       expect(publicKey.yCoordinate, isNotNull);
-      var signature = keyPair.privateKey
+      var signature = keyPair.privateKey!
           .createSigner(algorithms.signing.ecdsa.sha384)
           .sign('hello world'.codeUnits);
 
-      var verified = keyPair.publicKey
+      var verified = keyPair.publicKey!
           .createVerifier(algorithms.signing.ecdsa.sha384)
           .verify(Uint8List.fromList('hello world'.codeUnits), signature);
 
@@ -176,14 +176,14 @@ void main() {
 
       var bytes = f.readAsBytesSync();
 
-      var c = X509Certificate.fromAsn1(ASN1Parser(bytes).nextObject());
+      var c = X509Certificate.fromAsn1(ASN1Parser(bytes).nextObject() as ASN1Sequence);
       expect(c, isA<X509Certificate>());
     });
     test('Apple certificate for server-based Game Center verification', () {
       var f = File('test/resources/3rd-party-auth-prod-19824d.cer');
 
       var bytes = f.readAsBytesSync();
-      var c = X509Certificate.fromAsn1(ASN1Parser(bytes).nextObject());
+      var c = X509Certificate.fromAsn1(ASN1Parser(bytes).nextObject() as ASN1Sequence);
       expect(c, isA<X509Certificate>());
     });
   });

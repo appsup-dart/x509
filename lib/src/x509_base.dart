@@ -19,7 +19,7 @@ part 'objectidentifier.dart';
 part 'request.dart';
 
 class Name {
-  final List<Map<ObjectIdentifier, dynamic>> names;
+  final List<Map<ObjectIdentifier?, dynamic>> names;
 
   const Name(this.names);
 
@@ -40,10 +40,10 @@ class Name {
   /// AttributeValue ::= ANY -- DEFINED BY AttributeType
   factory Name.fromAsn1(ASN1Sequence sequence) {
     return Name(sequence.elements.map((ASN1Object set) {
-      return <ObjectIdentifier, dynamic>{
+      return <ObjectIdentifier?, dynamic>{
         for (var p in (set as ASN1Set).elements)
           toDart((p as ASN1Sequence).elements[0]):
-              toDart((p as ASN1Sequence).elements[1])
+              toDart(p.elements[1])
       };
     }).toList());
   }
@@ -66,8 +66,8 @@ class Name {
 }
 
 class Validity {
-  final DateTime notBefore;
-  final DateTime notAfter;
+  final DateTime? notBefore;
+  final DateTime? notAfter;
 
   Validity({this.notBefore, this.notAfter});
 
@@ -96,9 +96,9 @@ class SubjectPublicKeyInfo {
   SubjectPublicKeyInfo(this.algorithm, this.subjectPublicKey);
 
   factory SubjectPublicKeyInfo.fromAsn1(ASN1Sequence sequence) {
-    final algorithm = AlgorithmIdentifier.fromAsn1(sequence.elements[0]);
+    final algorithm = AlgorithmIdentifier.fromAsn1(sequence.elements[0] as ASN1Sequence);
     return SubjectPublicKeyInfo(
-        algorithm, publicKeyFromAsn1(sequence.elements[1], algorithm));
+        algorithm, publicKeyFromAsn1(sequence.elements[1] as ASN1BitString, algorithm));
   }
 
   @override
@@ -118,7 +118,7 @@ class SubjectPublicKeyInfo {
 }
 
 class AlgorithmIdentifier {
-  final ObjectIdentifier algorithm;
+  final ObjectIdentifier? algorithm;
   final parameters;
 
   AlgorithmIdentifier(this.algorithm, this.parameters);
@@ -160,21 +160,21 @@ class PrivateKeyInfo {
   ///   PrivateKey      OCTET STRING
   /// }
   factory PrivateKeyInfo.fromAsn1(ASN1Sequence sequence) {
-    final algorithm = AlgorithmIdentifier.fromAsn1(sequence.elements[1]);
+    final algorithm = AlgorithmIdentifier.fromAsn1(sequence.elements[1] as ASN1Sequence);
     var v = toDart(sequence.elements[0]) as BigInt;
     return PrivateKeyInfo(
         v.toInt() + 1,
         algorithm,
         keyPairFromAsn1(
             ASN1BitString(
-                (sequence.elements[2] as ASN1OctetString).contentBytes()),
-            algorithm.algorithm));
+                (sequence.elements[2] as ASN1OctetString).contentBytes()!),
+            algorithm.algorithm!));
   }
 }
 
 class EncryptedPrivateKeyInfo {
   final AlgorithmIdentifier encryptionAlgorithm;
-  final Uint8List encryptedData;
+  final Uint8List? encryptedData;
 
   EncryptedPrivateKeyInfo(this.encryptionAlgorithm, this.encryptedData);
 
@@ -183,7 +183,7 @@ class EncryptedPrivateKeyInfo {
   ///   encryptedData        OCTET STRING
   /// }
   factory EncryptedPrivateKeyInfo.fromAsn1(ASN1Sequence sequence) {
-    final algorithm = AlgorithmIdentifier.fromAsn1(sequence.elements[0]);
+    final algorithm = AlgorithmIdentifier.fromAsn1(sequence.elements[0] as ASN1Sequence);
     return EncryptedPrivateKeyInfo(
         algorithm, (sequence.elements[1] as ASN1OctetString).contentBytes());
   }
@@ -203,13 +203,13 @@ String toPem(SubjectPublicKeyInfo key) {
   return _getPEMFromBytes(key.toAsn1().encodedBytes, 'PUBLIC KEY');
 }
 
-Object _parseDer(List<int> bytes, String type) {
-  var p = ASN1Parser(bytes);
+Object _parseDer(List<int> bytes, String? type) {
+  var p = ASN1Parser(bytes as Uint8List);
   var o = p.nextObject();
   if (o is! ASN1Sequence) {
     throw FormatException('Expected SEQUENCE, got ${o.runtimeType}');
   }
-  var s = o as ASN1Sequence;
+  var s = o;
 
   switch (type) {
     case 'RSA PUBLIC KEY':

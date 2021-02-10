@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.0
+
+- Migrate null safety
+
 ## 0.1.3
 
 - Support for CertificatePolicies, CrlDistributionPoints and AuthorityInformationAccess extensions
