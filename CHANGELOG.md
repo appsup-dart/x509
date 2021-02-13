@@ -2,6 +2,7 @@
 
 ## 0.1.4
 - Bump `asn1lib` to 0.8.1.
+- Support GeneralNames for using by Issuer/Subject Alternative Name
 
 ## 0.1.3
 
