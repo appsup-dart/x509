@@ -187,4 +187,20 @@ void main() {
       expect(c, isA<X509Certificate>());
     });
   });
+
+  group('v3 extension', () {
+    var generalNameEncodeBytes = [48, 19, 130, 17, 119, 119, 119, 46, 99, 104, 97, 105, 110, 116, 111, 112, 101, 46, 99, 111, 109];
+    test('subject alternative name(=GeneralNames)', () {
+      var extension = ASN1Sequence.fromBytes(Uint8List.fromList(generalNameEncodeBytes));
+      var oid = ObjectIdentifier([2, 5, 29, 17]);
+      var c = ExtensionValue.fromAsn1(extension, oid);
+      expect(c, isA<GeneralNames>());
+    });
+    test('can parse DNS of subjectAltName', () {
+      var extension = ASN1Sequence.fromBytes(Uint8List.fromList(generalNameEncodeBytes));
+      var oid = ObjectIdentifier([2, 5, 29, 17]);
+      GeneralNames c = ExtensionValue.fromAsn1(extension, oid);
+      expect(c.names[0].toString(), "DNS:www.chaintope.com");
+    });
+  });
 }

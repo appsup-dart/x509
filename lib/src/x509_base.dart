@@ -3,6 +3,8 @@
 
 library x509;
 
+import 'dart:developer';
+
 import 'package:asn1lib/asn1lib.dart';
 import 'dart:convert';
 import 'package:quiver/core.dart';

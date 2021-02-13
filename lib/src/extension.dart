@@ -80,11 +80,12 @@ abstract class ExtensionValue {
           return CertificatePolicies.fromAsn1(obj);
         case 31:
           return CrlDistributionPoints.fromAsn1(obj);
-        case 33: // TODO: policy mappings extension
-        case 17: // TODO: subject alternative name extension
-        case 18: // TODO: issuer alternative name extension
+        case 17: // subject alternative name extension
+        case 18: // issuer alternative name extension
+          return GeneralNames.fromAsn1(obj);
         case 9: // TODO: subject directory attributes extension
         case 30: // TODO: name constraints extension
+        case 33: // TODO: policy mappings extension
         case 36: // TODO: policy constraints extension
           break;
         case 19:
@@ -579,5 +580,96 @@ class AccessDescription {
     return AccessDescription(
         accessMethod: toDart(sequence.elements[0]),
         accessLocation: toDart(sequence.elements[1]));
+  }
+}
+
+class GeneralName {
+  final bool isConstructed;
+  final int choice;
+  final ASN1Object contents;
+
+  GeneralName({this.isConstructed, this.choice, this.contents});
+
+  /// The ASN.1 definition is:
+  ///   GeneralName ::= CHOICE {
+  //       otherName                       [0]     OtherName,
+  //       rfc822Name                      [1]     IA5String,
+  //       dNSName                         [2]     IA5String,
+  //       x400Address                     [3]     ORAddress,
+  //       directoryName                   [4]     Name,
+  //       ediPartyName                    [5]     EDIPartyName,
+  //       uniformResourceIdentifier       [6]     IA5String,
+  //       iPAddress                       [7]     OCTET STRING,
+  //       registeredID                    [8]     OBJECT IDENTIFIER}
+  static final CHOICE_NAME = [
+    'otherName',
+    'rfc822Name',
+    'DNS',
+    'x400Address',
+    'directoryName',
+    'ediPartyName',
+    'uniformResourceIdentifier',
+    'IPAddress',
+    'registeredID',
+  ];
+
+  factory GeneralName.fromAsn1(ASN1Object obj) {
+    var tag = obj.tag;
+    var isConstructed = (0xA0 & tag) == 0xA0;
+    var choice = (0x1F & tag);
+    var contents;
+    if(isConstructed) {
+      contents = ASN1Parser(obj.valueBytes()).nextObject();
+    } else {
+      switch(choice) {
+        case 1:
+        case 2:
+        case 6:
+          contents = ASN1IA5String(String.fromCharCodes(obj.valueBytes()));
+          break;
+        case 7:
+          contents = ASN1OctetString(obj.valueBytes());
+          break;
+        case 8:
+          contents = ASN1ObjectIdentifier.fromBytes(obj.valueBytes());
+          break;
+        case 0: // TODO: unimplemented.
+        case 3:
+        case 4:
+        case 5:
+          log("Warning Not Supported CHOICE($choice).");
+          contents = obj;
+      }
+    }
+    return GeneralName(
+        isConstructed: isConstructed,
+        choice: choice,
+        contents: contents);
+  }
+
+  @override
+  String toString() {
+    var contentsString;
+    if(contents is ASN1IA5String) {
+      contentsString = (contents as ASN1IA5String).stringValue;
+    } else if(contents is ASN1OctetString) {
+      contentsString = (contents as ASN1OctetString).stringValue;
+    } else {
+      contentsString = contents.toString();
+    }
+    return "${CHOICE_NAME[this.choice]}:${contentsString}";
+  }
+}
+
+class GeneralNames extends ExtensionValue {
+  List<GeneralName> names;
+
+  GeneralNames(this.names);
+
+  //GeneralNames :: = SEQUENCE SIZE (1..MAX) OF GeneralName
+  factory GeneralNames.fromAsn1(ASN1Sequence sequence) {
+    return GeneralNames(sequence.elements.map((n) {
+      return GeneralName.fromAsn1(n);
+    }).toList());
   }
 }
