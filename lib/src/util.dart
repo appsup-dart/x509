@@ -141,6 +141,10 @@ KeyPair keyPairFromAsn1(ASN1BitString data, ObjectIdentifier algorithm) {
       var sequence =
           ASN1Parser(data.contentBytes()).nextObject() as ASN1Sequence;
       return rsaKeyPairFromAsn1(sequence);
+    case 'ecPublicKey':
+      var sequence =
+          ASN1Parser(data.contentBytes()).nextObject() as ASN1Sequence;
+      return ecKeyPairFromAsn1(sequence);
     case 'sha1WithRSAEncryption':
   }
   throw UnimplementedError('Unknown algoritmh $algorithm');
