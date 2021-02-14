@@ -13,11 +13,11 @@ class X509Certificate implements Certificate {
 
   ///
   final AlgorithmIdentifier signatureAlgorithm;
-  final List<int> signatureValue;
+  final List<int>? signatureValue;
 
   @override
   PublicKey get publicKey =>
-      tbsCertificate.subjectPublicKeyInfo.subjectPublicKey;
+      tbsCertificate.subjectPublicKeyInfo!.subjectPublicKey;
 
   const X509Certificate(
       this.tbsCertificate, this.signatureAlgorithm, this.signatureValue);
@@ -31,9 +31,12 @@ class X509Certificate implements Certificate {
   ///     signatureAlgorithm   AlgorithmIdentifier,
   ///     signatureValue       BIT STRING  }
   factory X509Certificate.fromAsn1(ASN1Sequence sequence) {
-    final algorithm = AlgorithmIdentifier.fromAsn1(sequence.elements[1]);
-    return X509Certificate(TbsCertificate.fromAsn1(sequence.elements[0]),
-        algorithm, toDart(sequence.elements[2]));
+    final algorithm =
+        AlgorithmIdentifier.fromAsn1(sequence.elements[1] as ASN1Sequence);
+    return X509Certificate(
+        TbsCertificate.fromAsn1(sequence.elements[0] as ASN1Sequence),
+        algorithm,
+        toDart(sequence.elements[2]));
   }
 
   ASN1Sequence toAsn1() {
@@ -50,7 +53,7 @@ class X509Certificate implements Certificate {
     buffer.writeln('\tData:');
     buffer.writeln(tbsCertificate.toString('\t\t'));
     buffer.writeln('\tSignature Algorithm: $signatureAlgorithm');
-    buffer.writeln(toHexString(toBigInt(signatureValue), '${prefix}\t\t', 18));
+    buffer.writeln(toHexString(toBigInt(signatureValue!), '${prefix}\t\t', 18));
     return buffer.toString();
   }
 }
@@ -58,33 +61,33 @@ class X509Certificate implements Certificate {
 /// An unsigned (To-Be-Signed) certificate.
 class TbsCertificate {
   /// The version number of the certificate.
-  final int version;
+  final int? version;
 
   /// The serial number of the certificate.
-  final int serialNumber;
+  final int? serialNumber;
 
   /// The signature of the certificate.
-  final AlgorithmIdentifier signature;
+  final AlgorithmIdentifier? signature;
 
   /// The issuer of the certificate.
-  final Name issuer;
+  final Name? issuer;
 
   /// The time interval for which this certificate is valid.
-  final Validity validity;
+  final Validity? validity;
 
   /// The subject of the certificate.
-  final Name subject;
+  final Name? subject;
 
-  final SubjectPublicKeyInfo subjectPublicKeyInfo;
+  final SubjectPublicKeyInfo? subjectPublicKeyInfo;
 
   /// The issuer unique id.
-  final List<int> issuerUniqueID;
+  final List<int>? issuerUniqueID;
 
   /// The subject unique id.
-  final List<int> subjectUniqueID;
+  final List<int>? subjectUniqueID;
 
   /// List of extensions.
-  final List<Extension> extensions;
+  final List<Extension>? extensions;
 
   const TbsCertificate(
       {this.version,
@@ -129,8 +132,9 @@ class TbsCertificate {
     var elements = sequence.elements;
     var version = 1;
     if (elements.first.tag == 0xa0) {
-      ASN1Integer e = ASN1Parser(elements.first.valueBytes()).nextObject();
-      version = e.valueAsBigInteger.toInt() + 1;
+      var e =
+          ASN1Parser(elements.first.valueBytes()).nextObject() as ASN1Integer;
+      version = e.valueAsBigInteger!.toInt() + 1;
       elements = elements.skip(1).toList();
     }
     var optionals = elements.skip(6);
@@ -147,9 +151,9 @@ class TbsCertificate {
             sUid = o.contentBytes();
             break;
           case 3:
-            ex = (ASN1Parser(o.contentBytes()).nextObject() as ASN1Sequence)
+            ex = (ASN1Parser(o.contentBytes()!).nextObject() as ASN1Sequence)
                 .elements
-                .map((v) => Extension.fromAsn1(v))
+                .map((v) => Extension.fromAsn1(v as ASN1Sequence))
                 .toList();
         }
       }
@@ -157,12 +161,13 @@ class TbsCertificate {
 
     return TbsCertificate(
         version: version,
-        serialNumber: (elements[0] as ASN1Integer).valueAsBigInteger.toInt(),
-        signature: AlgorithmIdentifier.fromAsn1(elements[1]),
-        issuer: Name.fromAsn1(elements[2]),
-        validity: Validity.fromAsn1(elements[3]),
-        subject: Name.fromAsn1(elements[4]),
-        subjectPublicKeyInfo: SubjectPublicKeyInfo.fromAsn1(elements[5]),
+        serialNumber: (elements[0] as ASN1Integer).valueAsBigInteger!.toInt(),
+        signature: AlgorithmIdentifier.fromAsn1(elements[1] as ASN1Sequence),
+        issuer: Name.fromAsn1(elements[2] as ASN1Sequence),
+        validity: Validity.fromAsn1(elements[3] as ASN1Sequence),
+        subject: Name.fromAsn1(elements[4] as ASN1Sequence),
+        subjectPublicKeyInfo:
+            SubjectPublicKeyInfo.fromAsn1(elements[5] as ASN1Sequence),
         issuerUniqueID: iUid,
         subjectUniqueID: sUid,
         extensions: ex);
@@ -172,7 +177,7 @@ class TbsCertificate {
     var seq = ASN1Sequence();
 
     if (version != 1) {
-      var v = ASN1Integer(BigInt.from(version - 1));
+      var v = ASN1Integer(BigInt.from(version! - 1));
       var o = ASN1Object.preEncoded(0xa0, v.encodedBytes);
       var b = o.encodedBytes
         ..setRange(o.encodedBytes.length - v.encodedBytes.length,
@@ -182,12 +187,12 @@ class TbsCertificate {
     }
     seq
       ..add(fromDart(serialNumber))
-      ..add(signature.toAsn1())
-      ..add(issuer.toAsn1())
-      ..add(validity.toAsn1())
-      ..add(subject.toAsn1())
-      ..add(subjectPublicKeyInfo.toAsn1());
-    if (version > 1) {
+      ..add(signature!.toAsn1())
+      ..add(issuer!.toAsn1())
+      ..add(validity!.toAsn1())
+      ..add(subject!.toAsn1())
+      ..add(subjectPublicKeyInfo!.toAsn1());
+    if (version! > 1) {
       if (issuerUniqueID != null) {
         // TODO
         // var iuid = ASN1BitString.fromBytes(issuerUniqueID);
@@ -205,13 +210,13 @@ class TbsCertificate {
     buffer.writeln('${prefix}Signature Algorithm: ${signature}');
     buffer.writeln('${prefix}Issuer: ${issuer}');
     buffer.writeln('${prefix}Validity:');
-    buffer.writeln(validity.toString('$prefix\t'));
+    buffer.writeln(validity?.toString('$prefix\t') ?? '');
     buffer.writeln('${prefix}Subject: ${subject}');
     buffer.writeln('${prefix}Subject Public Key Info:');
-    buffer.writeln(subjectPublicKeyInfo.toString('${prefix}\t'));
-    if (extensions != null && extensions.isNotEmpty) {
+    buffer.writeln(subjectPublicKeyInfo?.toString('${prefix}\t') ?? '');
+    if (extensions != null && extensions!.isNotEmpty) {
       buffer.writeln('${prefix}X509v3 extensions:');
-      for (var e in extensions) {
+      for (var e in extensions!) {
         buffer.writeln(e.toString('${prefix}\t'));
       }
     }

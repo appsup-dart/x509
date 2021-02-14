@@ -1,6 +1,12 @@
 # Changelog
 
+
+## 0.2.0-nullsafety.1
+
+- Migrate null safety
+
 ## 0.1.4
+
 - Bump `asn1lib` to 0.8.1.
 - Support GeneralNames for using by Issuer/Subject Alternative Name
 

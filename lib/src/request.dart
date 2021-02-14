@@ -15,19 +15,19 @@ class CertificationRequest {
   ///   signature          BIT STRING
   /// }
   factory CertificationRequest.fromAsn1(ASN1Sequence sequence) {
-    final algorithm = AlgorithmIdentifier.fromAsn1(sequence.elements[1]);
+    final algorithm = AlgorithmIdentifier.fromAsn1(sequence.elements[1] as ASN1Sequence);
     return CertificationRequest(
-        CertificationRequestInfo.fromAsn1(sequence.elements[0]),
+        CertificationRequestInfo.fromAsn1(sequence.elements[0] as ASN1Sequence),
         algorithm,
         (sequence.elements[2] as ASN1BitString).contentBytes());
   }
 }
 
 class CertificationRequestInfo {
-  final int version;
+  final int? version;
   final Name subject;
   final SubjectPublicKeyInfo subjectPublicKeyInfo;
-  final Map<String, List<dynamic>> attributes;
+  final Map<String, List<dynamic>>? attributes;
 
   CertificationRequestInfo(
       this.version, this.subject, this.subjectPublicKeyInfo, this.attributes);
@@ -41,8 +41,8 @@ class CertificationRequestInfo {
   factory CertificationRequestInfo.fromAsn1(ASN1Sequence sequence) {
     return CertificationRequestInfo(
         toDart(sequence.elements[0]).toInt() + 1,
-        Name.fromAsn1(sequence.elements[1]),
-        SubjectPublicKeyInfo.fromAsn1(sequence.elements[2]),
+        Name.fromAsn1(sequence.elements[1] as ASN1Sequence),
+        SubjectPublicKeyInfo.fromAsn1(sequence.elements[2] as ASN1Sequence),
         null /*TODO*/);
   }
 }
