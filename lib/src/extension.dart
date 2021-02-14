@@ -17,7 +17,8 @@ class Extension {
   /// The extension's value.
   final ExtensionValue extnValue;
 
-  const Extension(this.extnId, this.isCritical, this.extnValue);
+  const Extension(
+      {required this.extnId, this.isCritical = false, required this.extnValue});
 
   /// Creates a Extension from an [ASN1Sequence].
   ///
@@ -40,10 +41,10 @@ class Extension {
       octetIndex = 2;
     }
     return Extension(
-        id,
-        critical,
-        ExtensionValue.fromAsn1(
-            ASN1Parser(sequence.elements[octetIndex].contentBytes())
+        extnId: id,
+        isCritical: critical,
+        extnValue: ExtensionValue.fromAsn1(
+            ASN1Parser(sequence.elements[octetIndex].contentBytes()!)
                 .nextObject(),
             id));
   }
@@ -71,33 +72,33 @@ abstract class ExtensionValue {
     if (id.parent == ceId) {
       switch (id.nodes.last) {
         case 35:
-          return AuthorityKeyIdentifier.fromAsn1(obj);
+          return AuthorityKeyIdentifier.fromAsn1(obj as ASN1Sequence);
         case 14:
           return SubjectKeyIdentifier.fromAsn1(obj);
         case 15:
-          return KeyUsage.fromAsn1(obj);
+          return KeyUsage.fromAsn1(obj as ASN1BitString);
         case 32:
-          return CertificatePolicies.fromAsn1(obj);
+          return CertificatePolicies.fromAsn1(obj as ASN1Sequence);
         case 31:
-          return CrlDistributionPoints.fromAsn1(obj);
+          return CrlDistributionPoints.fromAsn1(obj as ASN1Sequence);
         case 17: // subject alternative name extension
         case 18: // issuer alternative name extension
-          return GeneralNames.fromAsn1(obj);
+          return GeneralNames.fromAsn1(obj as ASN1Sequence);
         case 9: // TODO: subject directory attributes extension
         case 30: // TODO: name constraints extension
         case 33: // TODO: policy mappings extension
         case 36: // TODO: policy constraints extension
           break;
         case 19:
-          return BasicConstraints.fromAsn1(obj);
+          return BasicConstraints.fromAsn1(obj as ASN1Sequence);
         case 37:
-          return ExtendedKeyUsage.fromAsn1(obj);
+          return ExtendedKeyUsage.fromAsn1(obj as ASN1Sequence);
       }
     }
     if (id.parent == peId) {
       switch (id.nodes.last) {
         case 1:
-          return AuthorityInformationAccess.fromAsn1(obj);
+          return AuthorityInformationAccess.fromAsn1(obj as ASN1Sequence);
       }
     }
     throw UnimplementedError(
@@ -110,9 +111,9 @@ abstract class ExtensionValue {
 /// The authority key identifier extension provides a means of identifying the
 /// public key corresponding to the private key used to sign a certificate.
 class AuthorityKeyIdentifier extends ExtensionValue {
-  final List<int> keyIdentifier;
+  final List<int>? keyIdentifier;
   final authorityCertIssuer;
-  final BigInt authorityCertSerialNumber;
+  final BigInt? authorityCertSerialNumber;
 
   AuthorityKeyIdentifier(this.keyIdentifier, this.authorityCertIssuer,
       this.authorityCertSerialNumber);
@@ -138,8 +139,8 @@ class AuthorityKeyIdentifier extends ExtensionValue {
           issuer = o;
           break;
         case 2:
-          number = (ASN1Parser(List.from(o.encodedBytes)..[0] = 2).nextObject()
-                  as ASN1Integer)
+          number = (ASN1Parser(List.from(o.encodedBytes) as Uint8List..[0] = 2)
+                  .nextObject() as ASN1Integer)
               .valueAsBigInteger;
       }
     }
@@ -150,7 +151,7 @@ class AuthorityKeyIdentifier extends ExtensionValue {
 /// The subject key identifier extension provides a means of identifying
 /// certificates that contain a particular public key.
 class SubjectKeyIdentifier extends ExtensionValue {
-  final List<int> keyIdentifier;
+  final List<int>? keyIdentifier;
 
   SubjectKeyIdentifier(this.keyIdentifier);
 
@@ -220,15 +221,15 @@ class KeyUsage extends ExtensionValue {
   final bool decipherOnly;
 
   const KeyUsage(
-      {this.digitalSignature,
-      this.nonRepudiation,
-      this.keyEncipherment,
-      this.dataEncipherment,
-      this.keyAgreement,
-      this.keyCertSign,
-      this.cRLSign,
-      this.encipherOnly,
-      this.decipherOnly});
+      {required this.digitalSignature,
+      required this.nonRepudiation,
+      required this.keyEncipherment,
+      required this.dataEncipherment,
+      required this.keyAgreement,
+      required this.keyCertSign,
+      required this.cRLSign,
+      required this.encipherOnly,
+      required this.decipherOnly});
 
   /// Creates a key usage extension from an [ASN1BitString].
   ///
@@ -295,7 +296,7 @@ class ExtendedKeyUsage extends ExtensionValue {
 /// that include this certificate.
 class BasicConstraints extends ExtensionValue {
   final bool cA;
-  final int pathLenConstraint;
+  final int? pathLenConstraint;
 
   BasicConstraints({this.cA = false, this.pathLenConstraint});
 
@@ -307,10 +308,11 @@ class BasicConstraints extends ExtensionValue {
   ///       cA                      BOOLEAN DEFAULT FALSE,
   ///       pathLenConstraint       INTEGER (0..MAX) OPTIONAL }
   factory BasicConstraints.fromAsn1(ASN1Sequence sequence) {
-    var cA = false, len;
+    var cA = false;
+    int? len;
     for (var o in sequence.elements) {
       if (o is ASN1Boolean) {
-        cA = o.booleanValue;
+        cA = o.booleanValue!;
       }
       if (o is ASN1Integer) {
         len = o.intValue;
@@ -332,7 +334,7 @@ class BasicConstraints extends ExtensionValue {
 class CertificatePolicies extends ExtensionValue {
   final List<PolicyInformation> policies;
 
-  CertificatePolicies({this.policies});
+  CertificatePolicies({required this.policies});
 
   /// Creates a certificate policies extension value from an [ASN1Sequence].
   ///
@@ -341,7 +343,8 @@ class CertificatePolicies extends ExtensionValue {
   ///   CertificatePolicies ::= SEQUENCE SIZE (1..MAX) OF PolicyInformation
   factory CertificatePolicies.fromAsn1(ASN1Sequence sequence) {
     return CertificatePolicies(policies: [
-      for (var e in sequence.elements) PolicyInformation.fromAsn1(e)
+      for (var e in sequence.elements)
+        PolicyInformation.fromAsn1(e as ASN1Sequence)
     ]);
   }
 
@@ -355,7 +358,8 @@ class PolicyInformation {
 
   final List<PolicyQualifierInfo> policyQualifiers;
 
-  PolicyInformation({this.policyIdentifier, this.policyQualifiers});
+  PolicyInformation(
+      {required this.policyIdentifier, this.policyQualifiers = const []});
 
   /// The ASN.1 definition is:
   ///
@@ -368,7 +372,7 @@ class PolicyInformation {
     if (sequence.elements.length > 1) {
       policyQualifiers.addAll((sequence.elements[1] as ASN1Sequence)
           .elements
-          .map((e) => PolicyQualifierInfo.fromAsn1(e)));
+          .map((e) => PolicyQualifierInfo.fromAsn1(e as ASN1Sequence)));
     }
     return PolicyInformation(
         policyIdentifier: policyIdentifier, policyQualifiers: policyQualifiers);
@@ -387,11 +391,13 @@ class PolicyInformation {
 class PolicyQualifierInfo {
   final ObjectIdentifier policyQualifierId;
 
-  final String cpsUri;
+  final String? cpsUri;
 
-  final UserNotice userNotice;
+  final UserNotice? userNotice;
 
-  PolicyQualifierInfo({this.policyQualifierId, this.cpsUri, this.userNotice});
+  PolicyQualifierInfo(
+      {required this.policyQualifierId, this.cpsUri, this.userNotice})
+      : assert(cpsUri != null || userNotice != null);
 
   /// The ASN.1 definition is:
   ///
@@ -409,7 +415,8 @@ class PolicyQualifierInfo {
       case 2: // unotice
         return PolicyQualifierInfo(
             policyQualifierId: policyQualifierId,
-            userNotice: UserNotice.fromAsn1(sequence.elements[1]));
+            userNotice:
+                UserNotice.fromAsn1(sequence.elements[1] as ASN1Sequence));
     }
     throw UnsupportedError(
         'Policy qualifier id $policyQualifierId not supported');
@@ -422,7 +429,7 @@ class PolicyQualifierInfo {
         return '${prefix}CPS: $cpsUri';
       case 2: // unotice
         return '${prefix}User Notice:\n'
-            '${userNotice.toString('${prefix}\t')}';
+            '${userNotice?.toString('${prefix}\t')}';
     }
     throw UnsupportedError(
         'Policy qualifier id $policyQualifierId not supported');
@@ -430,8 +437,8 @@ class PolicyQualifierInfo {
 }
 
 class UserNotice {
-  final NoticeReference noticeRef;
-  final String explicitText;
+  final NoticeReference? noticeRef;
+  final String? explicitText;
 
   UserNotice({this.noticeRef, this.explicitText});
 
@@ -470,7 +477,7 @@ class NoticeReference {
 
   final List<int> noticeNumbers;
 
-  NoticeReference({this.organization, this.noticeNumbers});
+  NoticeReference({required this.organization, required this.noticeNumbers});
 
   /// The ASN.1 definition is:
   ///
@@ -491,22 +498,23 @@ class NoticeReference {
 /// obtained.
 class CrlDistributionPoints extends ExtensionValue {
   final List<DistributionPoint> points;
-  CrlDistributionPoints({this.points});
+  CrlDistributionPoints({required this.points});
 
   /// The ASN.1 definition is:
   ///
   ///   CRLDistributionPoints ::= SEQUENCE SIZE (1..MAX) OF DistributionPoint
   factory CrlDistributionPoints.fromAsn1(ASN1Sequence sequence) {
     return CrlDistributionPoints(points: [
-      for (var e in sequence.elements) DistributionPoint.fromAsn1(e)
+      for (var e in sequence.elements)
+        DistributionPoint.fromAsn1(e as ASN1Sequence)
     ]);
   }
 }
 
 class DistributionPoint {
-  final String name;
-  final List<DistributionPointReason> reasons;
-  final String crlIssuer;
+  final String? name;
+  final List<DistributionPointReason>? reasons;
+  final String? crlIssuer;
 
   DistributionPoint({this.name, this.reasons, this.crlIssuer});
 
@@ -553,7 +561,7 @@ enum DistributionPointReason {
 class AuthorityInformationAccess extends ExtensionValue {
   final List<AccessDescription> descriptions;
 
-  AuthorityInformationAccess({this.descriptions});
+  AuthorityInformationAccess({required this.descriptions});
 
   /// The ASN.1 definition is:
   ///
@@ -561,14 +569,15 @@ class AuthorityInformationAccess extends ExtensionValue {
   ///     SEQUENCE SIZE (1..MAX) OF AccessDescription
   factory AuthorityInformationAccess.fromAsn1(ASN1Sequence sequence) {
     return AuthorityInformationAccess(descriptions: [
-      for (var e in sequence.elements) AccessDescription.fromAsn1(e)
+      for (var e in sequence.elements)
+        AccessDescription.fromAsn1(e as ASN1Sequence)
     ]);
   }
 }
 
 class AccessDescription {
-  final ObjectIdentifier accessMethod;
-  final String accessLocation;
+  final ObjectIdentifier? accessMethod;
+  final String? accessLocation;
 
   AccessDescription({this.accessLocation, this.accessMethod});
 
@@ -588,7 +597,10 @@ class GeneralName {
   final int choice;
   final ASN1Object contents;
 
-  GeneralName({this.isConstructed, this.choice, this.contents});
+  GeneralName(
+      {required this.isConstructed,
+      required this.choice,
+      required this.contents});
 
   /// The ASN.1 definition is:
   ///   GeneralName ::= CHOICE {
@@ -601,7 +613,7 @@ class GeneralName {
   //       uniformResourceIdentifier       [6]     IA5String,
   //       iPAddress                       [7]     OCTET STRING,
   //       registeredID                    [8]     OBJECT IDENTIFIER}
-  static final CHOICE_NAME = [
+  static final _choiceName = [
     'otherName',
     'rfc822Name',
     'DNS',
@@ -618,10 +630,10 @@ class GeneralName {
     var isConstructed = (0xA0 & tag) == 0xA0;
     var choice = (0x1F & tag);
     var contents;
-    if(isConstructed) {
+    if (isConstructed) {
       contents = ASN1Parser(obj.valueBytes()).nextObject();
     } else {
-      switch(choice) {
+      switch (choice) {
         case 1:
         case 2:
         case 6:
@@ -637,27 +649,25 @@ class GeneralName {
         case 3:
         case 4:
         case 5:
-          log("Warning Not Supported CHOICE($choice).");
+          log('Warning Not Supported CHOICE($choice).');
           contents = obj;
       }
     }
     return GeneralName(
-        isConstructed: isConstructed,
-        choice: choice,
-        contents: contents);
+        isConstructed: isConstructed, choice: choice, contents: contents);
   }
 
   @override
   String toString() {
     var contentsString;
-    if(contents is ASN1IA5String) {
+    if (contents is ASN1IA5String) {
       contentsString = (contents as ASN1IA5String).stringValue;
-    } else if(contents is ASN1OctetString) {
+    } else if (contents is ASN1OctetString) {
       contentsString = (contents as ASN1OctetString).stringValue;
     } else {
       contentsString = contents.toString();
     }
-    return "${CHOICE_NAME[this.choice]}:${contentsString}";
+    return '${_choiceName[choice]}:${contentsString}';
   }
 }
 

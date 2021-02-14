@@ -7,7 +7,7 @@ import 'package:crypto_keys/crypto_keys.dart' hide AlgorithmIdentifier;
 
 import '../x509.dart';
 
-ObjectIdentifier _ecParametersFromAsn1(ASN1Object object) {
+ObjectIdentifier? _ecParametersFromAsn1(ASN1Object object) {
   // https://tools.ietf.org/html/rfc5480#section-2.1.1
   //     ECParameters ::= CHOICE {
   //       namedCurve         OBJECT IDENTIFIER
@@ -37,23 +37,23 @@ KeyPair ecKeyPairFromAsn1(ASN1Sequence sequence) {
     throw UnsupportedError('Only `ecPrivkeyVer1` supported.');
   }
 
-  var privateKey = toBigInt(sequence.elements[1].contentBytes());
+  var privateKey = toBigInt(sequence.elements[1].contentBytes()!);
 
-  var l = sequence.elements[1].contentBytes().length;
+  var l = sequence.elements[1].contentBytes()!.length;
 
-  Identifier curve;
+  Identifier? curve;
 
   var i = 2;
   if (sequence.elements.length > i && sequence.elements[i].tag == 0xa0) {
     var e = ASN1Parser(sequence.elements[i].valueBytes()).nextObject();
-    curve = _curveObjectIdentifierToIdentifier(_ecParametersFromAsn1(e));
+    curve = _curveObjectIdentifierToIdentifier(_ecParametersFromAsn1(e)!);
     i++;
   }
   curve ??= _lengthToCurve(l);
 
   var publicKey;
   if (sequence.elements.length > i && sequence.elements[i].tag == 0xa1) {
-    var e = ASN1Parser(sequence.elements[i].contentBytes()).nextObject()
+    var e = ASN1Parser(sequence.elements[i].contentBytes()!).nextObject()
         as ASN1BitString;
     // https://tools.ietf.org/html/rfc5480#section-2.2
     // ECPoint ::= OCTET STRING
@@ -99,20 +99,24 @@ KeyPair rsaKeyPairFromAsn1(ASN1Sequence sequence) {
 }
 
 RsaPublicKey rsaPublicKeyFromAsn1(ASN1Sequence sequence) {
-  var modulus = (sequence.elements[0] as ASN1Integer).valueAsBigInteger;
-  var exponent = (sequence.elements[1] as ASN1Integer).valueAsBigInteger;
+  var modulus = (sequence.elements[0] as ASN1Integer).valueAsBigInteger!;
+  var exponent = (sequence.elements[1] as ASN1Integer).valueAsBigInteger!;
   return RsaPublicKey(modulus: modulus, exponent: exponent);
 }
 
 Identifier _lengthToCurve(int l) {
-  return {
-    32: curves.p256,
-    48: curves.p384,
-    66: curves.p521,
-  }[l];
+  switch (l) {
+    case 32:
+      return curves.p256;
+    case 48:
+      return curves.p384;
+    case 66:
+      return curves.p521;
+  }
+  throw UnsupportedError('No matching curve for length $l');
 }
 
-EcPublicKey ecPublicKeyFromAsn1(ASN1BitString bitString, {Identifier curve}) {
+EcPublicKey ecPublicKeyFromAsn1(ASN1BitString bitString, {Identifier? curve}) {
   var bytes = bitString.contentBytes();
   var compression = bytes[0];
   switch (compression) {
@@ -178,8 +182,8 @@ ASN1BitString keyToAsn1(Key key) {
 ASN1BitString keyPairToAsn1(KeyPair keyPair) {
   var s = ASN1Sequence();
 
-  RsaPrivateKey key = keyPair.privateKey;
-  RsaPublicKey publicKey = keyPair.publicKey;
+  var key = keyPair.privateKey as RsaPrivateKey;
+  var publicKey = keyPair.publicKey as RsaPublicKey;
   var pSub1 = (key.firstPrimeFactor - BigInt.one);
   var qSub1 = (key.secondPrimeFactor - BigInt.one);
   var exponent1 = key.privateExponent.remainder(pSub1);
