@@ -1,7 +1,7 @@
 # Changelog
 
 
-## 0.2.0-nullsafety.2
+## 0.2.0-nullsafety.3
 
 - Migrate null safety
 

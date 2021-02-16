@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:test/test.dart';
@@ -227,6 +228,26 @@ void main() {
       var oid = ObjectIdentifier([2, 5, 29, 17]);
       var c = ExtensionValue.fromAsn1(extension, oid) as GeneralNames;
       expect(c.names[0].toString(), 'DNS:www.chaintope.com');
+    });
+  });
+
+  group('keys from auth services', () {
+    test('https://login.microsoftonline.com/consumers/discovery/v2.0/keys', () {
+      var f = json
+          .decode(File('test/files/microsoft_keys.json').readAsStringSync());
+
+      for (var k in f['keys'] as List) {
+        for (var v in k['x5c'] as List) {
+          var bytes = base64.decode(v);
+          var p = ASN1Parser(bytes);
+          var o = p.nextObject();
+          if (o is! ASN1Sequence) {
+            throw FormatException('Expected SEQUENCE, got ${o.runtimeType}');
+          }
+          var s = o;
+          print(X509Certificate.fromAsn1(s));
+        }
+      }
     });
   });
 }

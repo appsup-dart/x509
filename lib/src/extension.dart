@@ -139,9 +139,9 @@ class AuthorityKeyIdentifier extends ExtensionValue {
           issuer = o;
           break;
         case 2:
-          number = (ASN1Parser(List.from(o.encodedBytes) as Uint8List..[0] = 2)
-                  .nextObject() as ASN1Integer)
-              .valueAsBigInteger;
+          number =
+              (ASN1Parser(o.encodedBytes..[0] = 2).nextObject() as ASN1Integer)
+                  .valueAsBigInteger;
       }
     }
     return AuthorityKeyIdentifier(keyId, issuer, number);
