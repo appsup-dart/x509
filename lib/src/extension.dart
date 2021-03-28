@@ -381,7 +381,19 @@ class PolicyInformation {
   @override
   String toString([String prefix = '']) {
     var buffer = StringBuffer();
-    buffer.writeln('${prefix}Policy: $policyIdentifier');
+    var piString;
+    try {
+      piString = policyIdentifier.toString();
+    } catch (e) {
+      if(e is UnknownOIDNameError) {
+        // It is unique definition policy. should not convert name.
+        // In this case, to be just combined numbers.
+        piString = policyIdentifier.nodes.map((i) => i.toString()).join('.');
+      } else {
+        rethrow;
+      }
+    }
+    buffer.writeln('${prefix}Policy: $piString');
     buffer.writeln(
         policyQualifiers.map((q) => q.toString('${prefix}\t')).join('\n'));
     return buffer.toString();

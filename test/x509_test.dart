@@ -309,4 +309,83 @@ void main() {
       }
     });
   });
+
+  group('PolicyInformation', () {
+    var subject = ASN1Sequence.fromBytes(Uint8List.fromList([
+      0x30,
+      0x3b,
+      0x6,
+      0xb,
+      0x2a,
+      0x83,
+      0x78,
+      0x8f,
+      0x8f,
+      0x00,
+      0x8,
+      0x5,
+      0x1,
+      0x3,
+      0x1e,
+      0x30,
+      0x2c,
+      0x30,
+      0x2a,
+      0x6,
+      0x8,
+      0x2b,
+      0x6,
+      0x1,
+      0x5,
+      0x5,
+      0x7,
+      0x2,
+      0x1,
+      0x16,
+      0x24,
+      0x68,
+      0x74,
+      0x74,
+      0x70,
+      0x3a,
+      0x2f,
+      0x2f,
+      0x77,
+      0x77,
+      0x77,
+      0x2e,
+      0x65,
+      0x78,
+      0x61,
+      0x6d,
+      0x70,
+      0x6c,
+      0x65,
+      0x2e,
+      0x63,
+      0x6f,
+      0x6d,
+      0x2f,
+      0x74,
+      0x65,
+      0x73,
+      0x74,
+      0x5f,
+      0x63,
+      0x70,
+      0x73,
+      0x2e,
+      0x68,
+      0x74,
+      0x6d,
+      0x6c
+    ]));
+    test('should not be convert when set unknown policy identifier', () {
+      var pi = PolicyInformation.fromAsn1(subject);
+      var expectStr = 'Policy: 1.2.504.247680.8.5.1.3.30\n' +
+          '\tCPS: http://www.example.com/test_cps.html\n' +
+          '';
+      expect(pi.toString(), expectStr);
+    });
+  });
 }
