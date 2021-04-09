@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.2
+
+- Compatible with version `0.3.0` of `crypto_keys`
+
 ## 0.2.1
 
 - Parse pem certificates
