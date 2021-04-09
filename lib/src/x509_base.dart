@@ -234,7 +234,7 @@ Object _parseDer(List<int> bytes, String? type) {
     case 'ENCRYPTED PRIVATE KEY':
       // Encrypted Private Key file (PKCS#8)
       return EncryptedPrivateKeyInfo.fromAsn1(s);
-    case '':
+    case 'CERTIFICATE':
       return X509Certificate.fromAsn1(s);
     case 'CERTIFICATE REQUEST':
       return CertificationRequest.fromAsn1(s);

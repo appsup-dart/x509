@@ -1,7 +1,10 @@
 # Changelog
 
+## 0.2.1
 
-## 0.2.0-nullsafety.3
+- Parse pem certificates
+
+## 0.2.0
 
 - Migrate null safety
 
