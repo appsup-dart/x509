@@ -66,13 +66,20 @@ KeyPair ecKeyPairFromAsn1(ASN1Sequence sequence) {
       publicKey: publicKey);
 }
 
-Identifier _curveObjectIdentifierToIdentifier(ObjectIdentifier id) {
+Identifier? _curveObjectIdentifierToIdentifier(ObjectIdentifier id) {
+  var idName;
+  try {
+    idName = id.name;
+  } on StateError catch (e) {
+    return null;
+  }
+
   var curve = {
     'secp256k1': curves.p256k,
     'prime256v1': curves.p256,
     'secp384r1': curves.p384,
-    'secp521r1': curves.p521,
-  }[id.name];
+    'secp521r1': curves.p521
+  }[idName];
   if (curve == null) {
     throw UnsupportedError('Curves of type ${id} not supported');
   }
@@ -246,6 +253,10 @@ dynamic toDart(ASN1Object obj) {
   if (obj is ASN1UTF8String) return obj.utf8StringValue;
   switch (obj.tag) {
     case 0xa0:
+      return toDart(ASN1Parser(obj.valueBytes()).nextObject());
+    case 161:
+      return toDart(ASN1Parser(obj.valueBytes()).nextObject());
+    case 162:
       return toDart(ASN1Parser(obj.valueBytes()).nextObject());
     case 0x86:
       return utf8.decode(obj.valueBytes());

@@ -93,12 +93,16 @@ abstract class ExtensionValue {
           return BasicConstraints.fromAsn1(obj as ASN1Sequence);
         case 37:
           return ExtendedKeyUsage.fromAsn1(obj as ASN1Sequence);
+        case 16:
+          return PrivateKeyUsagePeriod.fromAsn1(obj as ASN1Sequence);
       }
     }
     if (id.parent == peId) {
       switch (id.nodes.last) {
         case 1:
           return AuthorityInformationAccess.fromAsn1(obj as ASN1Sequence);
+        case 3:
+          return QCStatements.fromAsn1(obj as ASN1Sequence);
       }
     }
     throw UnimplementedError(
@@ -289,6 +293,41 @@ class ExtendedKeyUsage extends ExtensionValue {
 
   @override
   String toString() => ids.join(', ');
+}
+
+class PrivateKeyUsagePeriod extends ExtensionValue {
+  final DateTime? notBefore;
+  final DateTime? notAfter;
+
+  PrivateKeyUsagePeriod({this.notBefore, this.notAfter});
+
+  /// Creates a basic constraints extension value from an [ASN1Sequence].
+  ///
+  /// The ASN.1 definition is:
+  ///
+  ///    PrivateKeyUsagePeriod ::= SEQUENCE {
+  ///      notBefore       [0]     GeneralizedTime OPTIONAL,
+  ///      notAfter        [1]     GeneralizedTime OPTIONAL }
+  factory PrivateKeyUsagePeriod.fromAsn1(ASN1Sequence sequence) {
+    var notBefore;
+    var notAfter;
+    for (ASN1Object o in sequence.elements) {
+      if (o is ASN1Object) {
+        var taggedObject = o;
+        if (taggedObject.tag == 128) {
+          notBefore =
+              ASN1GeneralizedTime.fromBytes(o.encodedBytes).dateTimeValue;
+        } else if (taggedObject.tag == 129) {
+          notAfter =
+              ASN1GeneralizedTime.fromBytes(o.encodedBytes).dateTimeValue;
+        }
+      }
+    }
+    return PrivateKeyUsagePeriod(notBefore: notBefore, notAfter: notAfter);
+  }
+
+  @override
+  String toString() => 'NotBefore:$notBefore, NotAfter:$notAfter';
 }
 
 /// The basic constraints extension identifies whether the subject of the
@@ -572,6 +611,34 @@ class AuthorityInformationAccess extends ExtensionValue {
       for (var e in sequence.elements)
         AccessDescription.fromAsn1(e as ASN1Sequence)
     ]);
+  }
+}
+
+class QCStatements extends ExtensionValue {
+  final statementId;
+  final qcStatementInfo;
+
+  QCStatements({required this.statementId, required this.qcStatementInfo});
+
+  /// The ASN.1 definition is:
+  ///
+  ///  QCStatement ::= SEQUENCE {
+  ///  statementId        OBJECT IDENTIFIER,
+  ///  statementInfo      ANY DEFINED BY statementId OPTIONAL}
+  factory QCStatements.fromAsn1(ASN1Sequence sequence) {
+    var statementId;
+    if (sequence.elements.isNotEmpty) {
+      statementId =
+          ASN1ObjectIdentifier.fromBytes(sequence.elements[0].encodedBytes);
+    }
+
+    var qcStatementInfo;
+    if (sequence.elements.length > 1) {
+      qcStatementInfo = sequence.elements[1];
+    }
+
+    return QCStatements(
+        statementId: statementId, qcStatementInfo: qcStatementInfo);
   }
 }
 
