@@ -32,7 +32,7 @@ class ObjectIdentifier {
   }
 
   ASN1ObjectIdentifier toAsn1() {
-    var bytes = <int?>[];
+    var bytes = <int>[];
     bytes.add(nodes.first * 40 + nodes[1]);
     for (var v in nodes.skip(2)) {
       var w = [];
@@ -46,7 +46,7 @@ class ObjectIdentifier {
       bytes.addAll(w.skip(1).toList().reversed.map((v) => v + 128));
       bytes.add(w.first);
     }
-    return ASN1ObjectIdentifier(bytes as List<int>);
+    return ASN1ObjectIdentifier(bytes);
   }
 
   @override
