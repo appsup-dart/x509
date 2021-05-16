@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:test/test.dart';
-import 'package:x509/x509.dart';
+import 'package:x509b/x509.dart';
 import 'dart:io';
 import 'package:asn1lib/asn1lib.dart';
 
