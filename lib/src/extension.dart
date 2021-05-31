@@ -62,6 +62,7 @@ class Extension {
 abstract class ExtensionValue {
   static const ceId = ObjectIdentifier([2, 5, 29]);
   static const peId = ObjectIdentifier([1, 3, 6, 1, 5, 5, 7, 1]);
+  static const xId = ObjectIdentifier([2, 23, 136, 1, 1, 6, 2]);
 
   const ExtensionValue();
 
@@ -104,6 +105,9 @@ abstract class ExtensionValue {
         case 3:
           return QCStatements.fromAsn1(obj as ASN1Sequence);
       }
+    }
+    if (id == xId) {
+      return UnknownExtension.fromAsn1(obj);
     }
     throw UnimplementedError(
         'Cannot handle $id (${id.parent} ${id.nodes.last})');
@@ -611,6 +615,16 @@ class AuthorityInformationAccess extends ExtensionValue {
       for (var e in sequence.elements)
         AccessDescription.fromAsn1(e as ASN1Sequence)
     ]);
+  }
+}
+
+class UnknownExtension extends ExtensionValue {
+  final ASN1Object object;
+
+  UnknownExtension({required this.object});
+
+  factory UnknownExtension.fromAsn1(ASN1Object object) {
+    return UnknownExtension(object: object);
   }
 }
 

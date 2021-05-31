@@ -471,6 +471,16 @@ class ObjectIdentifier {
       },
       23: {
         null: 'international-organizations',
+        136: {
+          null: 'international-civil-aviation-organization',
+          1: {
+            null: 'machine-readable-travel-document',
+            1: {
+              null: 'security',
+              6: {null: 'CSCA-name-change', 2: 'documentTypeList'}
+            }
+          }
+        },
         140: {
           null: 'ca-browser-forum',
           1: {
