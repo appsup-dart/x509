@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.4
+
+- Add extention https://oidref.com/2.23.136.1.1.6.2 handling
+
 ## 0.2.3
 
 - Extra features / bugfixes for EHN DGC parsing. (Digital Green Certificate)
