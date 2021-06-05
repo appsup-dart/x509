@@ -109,6 +109,8 @@ abstract class ExtensionValue {
     if (id == xId) {
       return UnknownExtension.fromAsn1(obj);
     }
+    else
+      return UnknownExtension.fromAsn1(obj);
     throw UnimplementedError(
         'Cannot handle $id (${id.parent} ${id.nodes.last})');
   }

@@ -65,6 +65,7 @@ class ObjectIdentifier {
       if (tree is Map) return tree[null];
       return tree;
     } catch (e) {
+      return nodes.toString();
       throw StateError(
           'Unable to get name of ObjectIdentifier with nodes $nodes');
     }
@@ -73,6 +74,11 @@ class ObjectIdentifier {
   @override
   String toString() => '$name';
 
+  //1.2.840.10045.4.3.2: ecdsaWithSHA256 (ANSI X9.62 ECDSA algorithm with SHA256)
+  //2.16.840.1.101.3.4.2.1: Secure Hash Algorithm that uses a 256 bit key (SHA256)
+  //extendedKeyUsage	1.3.6.1.4.1.1847.2021.1.1 for Test Issuers
+  //extendedKeyUsage	1.3.6.1.4.1.1847.2021.1.2 for Vacination Issuers
+  //extendedKeyUsage	1.3.6.1.4.1.1847.2021.1.3 for Recovery Issuers
   static const _tree = {
     0: {
       null: 'itu-t',
@@ -121,6 +127,13 @@ class ObjectIdentifier {
                 5: 'prime239v2',
                 6: 'prime239v3',
                 7: 'prime256v1',
+              }
+            },
+            4: {
+              null: 'signatures',
+              3: {
+                null: 'ecdsa-with-SHA2',
+                2: 'ecdsa-with-SHA256'
               }
             }
           },
@@ -222,6 +235,26 @@ class ObjectIdentifier {
           null: 'dod',
           1: {
             null: 'internet',
+            4:{
+              null: 'private',
+              1: {
+                null: 'enterprise',
+                0:{
+                1847: {
+                  null: 'jointResearchCentre',
+                  2021: {
+                    null: 'covid19',
+                    1: {
+                      null: 'issuers',
+                      1: 'Test Issuers',
+                      2: 'Vaccination Issuers',
+                      3: 'Recovery Issuers'
+                    },
+                  },
+                },
+                },
+              },
+            },
             5: {
               null: 'security',
               5: {
@@ -449,8 +482,11 @@ class ObjectIdentifier {
         }
       },
       16: {
+        null: "country",
         840: {
+          null: "us",
           1: {
+            null: "organization",
             113730: {
               null: 'netscape',
               1: {
@@ -465,6 +501,19 @@ class ObjectIdentifier {
                 13: 'netscape-comment'
               },
               2: {null: 'netscape-data-type', 5: 'netscape-cert-sequence'}
+            },
+            101:{
+              null: "gov",
+              3:{
+                null: "csor",
+                4:{
+                  null: "nistAlgorithms",
+                  2: {
+                    null: "hashalgs",
+                    1: "sha256"
+                  }
+                }
+              }
             }
           }
         }

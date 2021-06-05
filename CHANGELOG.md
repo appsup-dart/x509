@@ -1,4 +1,9 @@
 # Changelog
+## 0.2.5
+
+- Be more leniant towards unknown OIDs -- treat as Unknown, but do not fail
+- Parse DGC issuer OIDs
+- Parse more types of algo's
 
 ## 0.2.4
 
