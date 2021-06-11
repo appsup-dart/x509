@@ -261,7 +261,7 @@ dynamic toDart(ASN1Object obj) {
     case 0x86:
       return utf8.decode(obj.valueBytes());
   }
-  return obj;
+  return obj.valueBytes();
   throw ArgumentError(
       'Cannot convert $obj (${obj.runtimeType}) to dart object.');
 }
