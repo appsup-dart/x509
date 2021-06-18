@@ -259,6 +259,7 @@ dynamic toDart(ASN1Object obj) {
     case 162:
       return toDart(ASN1Parser(obj.valueBytes()).nextObject());
     case 0x86:
+    case 0x1A:
       return utf8.decode(obj.valueBytes());
   }
   return obj.valueBytes();
