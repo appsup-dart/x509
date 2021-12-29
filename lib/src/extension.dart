@@ -570,18 +570,30 @@ class DistributionPoint {
   ///     reasons                 [1]     ReasonFlags OPTIONAL,
   ///     cRLIssuer               [2]     GeneralNames OPTIONAL }
   factory DistributionPoint.fromAsn1(ASN1Sequence sequence) {
-    var name = sequence.elements.isEmpty ? null : toDart(sequence.elements[0]);
-    var reasons = sequence.elements.length <= 1
-        ? null
-        : (sequence.elements[1] as ASN1BitString)
-            .valueBytes()
-            .map((v) => DistributionPointReason.values[v])
-            .toList();
-
-    var crlIssuer =
-        sequence.elements.length <= 2 ? null : toDart(sequence.elements[2]);
+    String? name;
+    List<DistributionPointReason>? reasons;
+    String? crlIssuer;
+    for (final element in sequence.elements) {
+      switch (element.tag) {
+        case 0xa0:
+          name = toDart(element);
+          break;
+        case 0xa1:
+          reasons = ((element as ASN1BitString)
+              .valueBytes()
+              .map((v) => DistributionPointReason.values[v])
+              .toList());
+          break;
+        case 0xa2:
+          crlIssuer = utf8.decode(toDart(element));
+          break;
+      }
+    }
     return DistributionPoint(
-        name: name, reasons: reasons, crlIssuer: crlIssuer);
+      name: name,
+      reasons: reasons,
+      crlIssuer: crlIssuer,
+    );
   }
 }
 
