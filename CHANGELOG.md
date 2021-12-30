@@ -5,7 +5,7 @@
 
 ## 0.2.8
 
-- version bump
+- Fixed tag 26 that should be a string
 
 ## 0.2.7
 
