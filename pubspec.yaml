@@ -1,6 +1,6 @@
 name: x509b
 description: Dart library for parsing and working with X.509 certificates.
-version: 0.2.9
+version: 0.2.10
 homepage: https://github.com/jeroentrappers/x509
 
 environment:
