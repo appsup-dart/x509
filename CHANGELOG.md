@@ -1,4 +1,8 @@
 # Changelog
+## 0.2.10
+
+- Removed distribution points implementation.
+
 ## 0.2.9
 
 - Fixed distribution points to use tags instead of indexes
