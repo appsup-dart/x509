@@ -1,4 +1,24 @@
 # Changelog
+## 0.2.9
+
+- Fixed distribution points to use tags instead of indexes
+
+## 0.2.8
+
+- version bump
+
+## 0.2.7
+
+- version bump
+
+## 0.2.7b
+
+- updated dart
+
+## 0.2.6
+
+- updated ans1lib
+
 ## 0.2.5
 
 - Be more leniant towards unknown OIDs -- treat as Unknown, but do not fail
