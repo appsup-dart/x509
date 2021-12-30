@@ -585,7 +585,7 @@ class DistributionPoint {
               .toList());
           break;
         case 0xa2:
-          crlIssuer = utf8.decode(toDart(element));
+          crlIssuer = String.fromCharCodes(toDart(element));
           break;
       }
     }
