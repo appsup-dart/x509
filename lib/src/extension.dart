@@ -62,6 +62,7 @@ class Extension {
 abstract class ExtensionValue {
   static const ceId = ObjectIdentifier([2, 5, 29]);
   static const peId = ObjectIdentifier([1, 3, 6, 1, 5, 5, 7, 1]);
+  static const goog24Id = ObjectIdentifier([1, 3, 6, 1, 4, 1, 11129, 2, 4]);
 
   const ExtensionValue();
 
@@ -99,6 +100,12 @@ abstract class ExtensionValue {
       switch (id.nodes.last) {
         case 1:
           return AuthorityInformationAccess.fromAsn1(obj as ASN1Sequence);
+      }
+    }
+    if (id.parent == goog24Id) {
+      switch (id.nodes.last) {
+        case 2:
+          return SctList.fromAsn1(obj as ASN1OctetString);
       }
     }
     throw UnimplementedError(
@@ -682,4 +689,8 @@ class GeneralNames extends ExtensionValue {
       return GeneralName.fromAsn1(n);
     }).toList());
   }
+}
+
+class SctList extends ExtensionValue {
+  SctList.fromAsn1(ASN1OctetString octetString);
 }
