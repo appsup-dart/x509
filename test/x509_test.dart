@@ -263,4 +263,16 @@ void main() {
       }
     });
   });
+
+  group('Certificate fields', () {
+    test('Parse Generalized time', () {
+      var f = File('test/files/generalized_time.der');
+      var bytes = f.readAsBytesSync();
+      var parser = ASN1Parser(bytes);
+      expect(parser.hasNext(), isTrue);
+
+      var c = X509Certificate.fromAsn1(parser.nextObject() as ASN1Sequence);
+      expect(c, isA<X509Certificate>());
+    });
+  });
 }

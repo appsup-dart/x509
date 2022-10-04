@@ -178,7 +178,9 @@ String keyToString(Key key, [String prefix = '']) {
 ASN1BitString keyToAsn1(Key key) {
   var s = ASN1Sequence();
   if (key is RsaPublicKey) {
-    s..add(ASN1Integer(key.modulus))..add(ASN1Integer(key.exponent));
+    s
+      ..add(ASN1Integer(key.modulus))
+      ..add(ASN1Integer(key.exponent));
   }
   return ASN1BitString(s.encodedBytes);
 }
@@ -242,6 +244,7 @@ dynamic toDart(ASN1Object obj) {
   if (obj is ASN1OctetString) return obj.stringValue;
   if (obj is ASN1PrintableString) return obj.stringValue;
   if (obj is ASN1UtcTime) return obj.dateTimeValue;
+  if (obj is ASN1GeneralizedTime) return obj.dateTimeValue;
   if (obj is ASN1IA5String) return obj.stringValue;
   if (obj is ASN1UTF8String) return obj.utf8StringValue;
   switch (obj.tag) {
