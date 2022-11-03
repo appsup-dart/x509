@@ -93,6 +93,8 @@ abstract class ExtensionValue {
           return BasicConstraints.fromAsn1(obj as ASN1Sequence);
         case 37:
           return ExtendedKeyUsage.fromAsn1(obj as ASN1Sequence);
+        case 16:
+          return PrivateKeyUsagePeriod.fromAsn1(obj as ASN1Sequence);
       }
     }
     if (id.parent == peId) {
@@ -291,6 +293,37 @@ class ExtendedKeyUsage extends ExtensionValue {
 
   @override
   String toString() => ids.join(', ');
+}
+
+class PrivateKeyUsagePeriod extends ExtensionValue {
+  final DateTime? notBefore;
+  final DateTime? notAfter;
+
+  PrivateKeyUsagePeriod({this.notBefore, this.notAfter});
+
+  /// Creates a basic constraints extension value from an [ASN1Sequence].
+  ///
+  /// The ASN.1 definition is:
+  ///
+  ///    PrivateKeyUsagePeriod ::= SEQUENCE {
+  ///      notBefore       [0]     GeneralizedTime OPTIONAL,
+  ///      notAfter        [1]     GeneralizedTime OPTIONAL }
+  factory PrivateKeyUsagePeriod.fromAsn1(ASN1Sequence sequence) {
+    DateTime? notBefore;
+    DateTime? notAfter;
+    for (ASN1Object o in sequence.elements) {
+      var taggedObject = o;
+      if (taggedObject.tag == 128) {
+        notBefore = ASN1GeneralizedTime.fromBytes(o.encodedBytes).dateTimeValue;
+      } else if (taggedObject.tag == 129) {
+        notAfter = ASN1GeneralizedTime.fromBytes(o.encodedBytes).dateTimeValue;
+      }
+    }
+    return PrivateKeyUsagePeriod(notBefore: notBefore, notAfter: notAfter);
+  }
+
+  @override
+  String toString() => 'NotBefore:$notBefore, NotAfter:$notAfter';
 }
 
 /// The basic constraints extension identifies whether the subject of the

@@ -321,6 +321,29 @@ void main() {
         expect(cert, isA<X509Certificate>());
       }
     });
+
+    test('parse privateKeyUsagePeriod', () {
+      var pem = '''-----BEGIN CERTIFICATE-----
+MIIDJTCCAsygAwIBAgIIMWAojeoOOlkwCgYIKoZIzj0EAwIwgYYxFzAVBgNVBAMMDkNTQ0EgSGVhbHRoIE5MMQowCAYDVQQFEwEyMS0wKwYDVQQLDCRNaW5pc3RyeSBvZiBIZWFsdGggV2VsZmFyZSBhbmQgU3BvcnQxIzAhBgNVBAoMGktpbmdkb20gb2YgdGhlIE5ldGhlcmxhbmRzMQswCQYDVQQGEwJOTDAeFw0yMTA0MjYwODU3MzVaFw0zMjA0MjMwODU3MzVaMIGZMQswCQYDVQQGEwJOTDEjMCEGA1UECgwaS2luZ2RvbSBvZiB0aGUgTmV0aGVybGFuZHMxLTArBgNVBAsMJE1pbmlzdHJ5IG9mIEhlYWx0aCBXZWxmYXJlIGFuZCBTcG9ydDEKMAgGA1UEBRMBMTEqMCgGA1UEAwwhSGVhbHRoLURTQy12YWxpZC1mb3ItdmFjY2luYXRpb25zMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEmcNCX0lhlqcvJ/YHl/+TDLbIO09nTsRUr7KP23Qp3KUXAcnq3EkrTVswaJx93exNhW3VeFdILS1vI84sWbJoW6OCAQ0wggEJMB8GA1UdIwQYMBaAFFak99WeVB9We0dQ33IDCu5uCzZlMBsGA1UdEgQUMBKkEDAOMQwwCgYDVQQHDANOTEQwGwYDVR0RBBQwEqQQMA4xDDAKBgNVBAcMA05MRDAXBgNVHSUEEDAOBgwrBgEEAQCON49lAQIwNwYDVR0fBDAwLjAsoCqgKIYmaHR0cDovL2NybC5ucGtkLm5sL0NSTHMvTkxELUhlYWx0aC5jcmwwHQYDVR0OBBYEFGzMKHGeML2Vkax4IVCKguaz0430MCsGA1UdEAQkMCKADzIwMjEwNDI2MDg1NzM1WoEPMjAyMTExMjIwODU3MzVaMA4GA1UdDwEB/wQEAwIHgDAKBggqhkjOPQQDAgNHADBEAiAZh9OiWVAJQbaJMhN3dWuDtnYrcbBAuXLX1Ma7mS1EvgIgVuD6aTsh8PIW0SunH8Tp00E2zMGQkbW1NHNIzrQmOKo=
+-----END CERTIFICATE-----''';
+
+      var cert = parsePem(pem).single;
+
+      // openSSL result
+      // X509v3 Private Key Usage Period:
+      //          Not Before: Apr 26 08:57:35 2021 GMT, Not After: Nov 22 08:57:35 2021 GMT
+
+      expect(cert, isA<X509Certificate>());
+
+      var c = cert as X509Certificate;
+      // get extension value
+      var pkup = c.tbsCertificate.extensions!
+          .map((e) => e.extnValue)
+          .whereType<PrivateKeyUsagePeriod>()
+          .first;
+      expect(pkup.notBefore, DateTime.parse('2021-04-26 08:57:35.000Z'));
+      expect(pkup.notAfter, DateTime.parse('2021-11-22 08:57:35.000Z'));
+    });
   });
 
   group('PolicyInformation', () {
