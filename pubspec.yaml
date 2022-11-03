@@ -1,6 +1,6 @@
 name: x509
 description: Dart library for parsing and working with X.509 certificates.
-version: 0.2.0
+version: 0.2.2
 homepage: https://github.com/appsup-dart/x509
 
 environment:
@@ -9,7 +9,7 @@ environment:
 dependencies:
   asn1lib: ^1.0.0
   quiver: ^3.0.0
-  crypto_keys: ^0.2.0
+  crypto_keys: '>=0.2.0 <0.4.0'
 
 dev_dependencies:
   test: ^1.0.0

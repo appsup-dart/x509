@@ -1,7 +1,14 @@
 # Changelog
 
+## 0.2.2
 
-## 0.2.0-nullsafety.3
+- Compatible with version `0.3.0` of `crypto_keys`
+
+## 0.2.1
+
+- Parse pem certificates
+
+## 0.2.0
 
 - Migrate null safety
 

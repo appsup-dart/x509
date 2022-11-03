@@ -308,5 +308,18 @@ void main() {
         }
       }
     });
+
+    test(
+        'https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com',
+        () {
+      var f =
+          json.decode(File('test/files/google_certs.json').readAsStringSync())
+              as Map;
+
+      for (var v in f.values) {
+        var cert = parsePem(v).first;
+        expect(cert, isA<X509Certificate>());
+      }
+    });
   });
 }
