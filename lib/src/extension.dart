@@ -528,9 +528,7 @@ class DistributionPoint {
   ///     reasons                 [1]     ReasonFlags OPTIONAL,
   ///     cRLIssuer               [2]     GeneralNames OPTIONAL }
   factory DistributionPoint.fromAsn1(ASN1Sequence sequence) {
-    var name = sequence.elements.isEmpty
-        ? null
-        : DistributionPointName.fromAsn1(sequence.elements[0] as ASN1Sequence);
+    var name = sequence.elements.isEmpty ? null : DistributionPointName.fromAsn1(ASN1Object.fromBytes(sequence.elements[0].valueBytes()));
     var reasons = sequence.elements.length <= 1
         ? null
         : (sequence.elements[1] as ASN1BitString)
@@ -546,25 +544,53 @@ class DistributionPoint {
 }
 
 class DistributionPointName {
-  final GeneralNames? fullName;
-  final dynamic nameRelativeToCrlIssuer;
+  final int choice;
+  final GeneralNames? generalNames;
+  final RelativeDistinguishedName? relativeDistinguishedName;
+  static final _choiceName = [
+    'Full Name',
+    'CRLIssuer',
+  ];
 
-  DistributionPointName({this.fullName, this.nameRelativeToCrlIssuer});
+  DistributionPointName(this.choice, this.generalNames, this.relativeDistinguishedName);
 
-  /// The ASN.1 definition is:
-  ///
-  ///   DistributionPointName ::= CHOICE {
-  ///     fullName                [0]     GeneralNames,
-  ///     nameRelativeToCRLIssuer [1]     RelativeDistinguishedName }
-  factory DistributionPointName.fromAsn1(ASN1Sequence sequence) {
-    var fullName = sequence.elements.isEmpty
-        ? null
-        : GeneralNames.fromAsn1(sequence.elements[0] as ASN1Sequence);
-    var nameRelativeToCrlIssuer =
-        sequence.elements.length <= 1 ? null : toDart(sequence.elements[1]);
-    return DistributionPointName(
-        fullName: fullName, nameRelativeToCrlIssuer: nameRelativeToCrlIssuer);
+  // DistributionPointName ::= CHOICE {
+  //   fullName [0] GeneralNames,
+  //   nameRelativeToCRLIssuer [1] RelativeDistinguishedName
+  // }
+  factory DistributionPointName.fromAsn1(ASN1Object obj) {
+    var choice = (0x1F & obj.tag);
+    var childObj = ASN1Parser(obj.valueBytes()).nextObject();
+    var generalNames;
+    var relativeName;
+
+    switch (choice) {
+      case 0:
+        generalNames = GeneralNames.fromAsn1(childObj);
+        break;
+      case 1:
+        relativeName = RelativeDistinguishedName();
+        break;
+      default:
+        throw UnsupportedError('Not supported CHOICE ($choice) by DistributionPointName.');
+    }
+    return DistributionPointName(choice, generalNames, relativeName);
   }
+
+  @override
+  String toString() {
+    var contentsString;
+    if (generalNames != null) {
+      contentsString = generalNames.toString();
+    } else {
+      contentsString = relativeDistinguishedName.toString();
+    }
+    return '${_choiceName[choice]}: ${contentsString}';
+  }
+}
+
+class RelativeDistinguishedName {
+
 }
 
 enum DistributionPointReason {
@@ -647,7 +673,7 @@ class GeneralName {
     'x400Address',
     'directoryName',
     'ediPartyName',
-    'uniformResourceIdentifier',
+    'URI',
     'IPAddress',
     'registeredID',
   ];
@@ -666,16 +692,19 @@ class GeneralName {
         case 6:
           contents = ASN1IA5String(String.fromCharCodes(obj.valueBytes()));
           break;
-        case 7:
+        case 7: // IPAddress (OctetString)
           contents = ASN1OctetString(obj.valueBytes());
           break;
-        case 8:
+        case 8: // registeredID (ObjectIdentifier)
           contents = ASN1ObjectIdentifier.fromBytes(obj.valueBytes());
           break;
         case 0: // TODO: unimplemented.
         case 3:
         case 4:
-        case 5:
+        case 5: // ediPartyName
+          //  EDIPartyName ::= SEQUENCE {
+          //   nameAssigner            [0]     DirectoryString OPTIONAL,
+          //   partyName               [1]     DirectoryString }
           log('Warning Not Supported CHOICE($choice).');
           contents = obj;
       }
@@ -704,9 +733,20 @@ class GeneralNames extends ExtensionValue {
   GeneralNames(this.names);
 
   //GeneralNames :: = SEQUENCE SIZE (1..MAX) OF GeneralName
-  factory GeneralNames.fromAsn1(ASN1Sequence sequence) {
-    return GeneralNames(sequence.elements.map((n) {
-      return GeneralName.fromAsn1(n);
-    }).toList());
+  factory GeneralNames.fromAsn1(ASN1Object obj) {
+    if(obj is ASN1Sequence) {
+      var sequence = obj;
+      return GeneralNames(sequence.elements.map((n) {
+        return GeneralName.fromAsn1(n);
+      }).toList());
+    } else {
+      var _name = GeneralName.fromAsn1(obj);
+      return GeneralNames([_name]);
+    }
+  }
+
+  @override
+  String toString() {
+    return names.map((n) => n.toString()).join(", ");
   }
 }

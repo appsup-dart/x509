@@ -249,10 +249,24 @@ dynamic toDart(ASN1Object obj) {
   if (obj is ASN1UtcTime) return obj.dateTimeValue;
   if (obj is ASN1IA5String) return obj.stringValue;
   if (obj is ASN1UTF8String) return obj.utf8StringValue;
+
+  // ASN.1 Identifier format is below:
+  // | 7 | 6 |  5  | 4| 3| 2|1|0|
+  // | Class | P/C | Tag number |
+  //
+  // The Class type is below:
+  // 0 0(0): Universal
+  // 0 1(1): Applicaation
+  // 1 0(2): Context-Specific
+  // 1 1(3): Private
+  //
+  // The P/C is below:
+  // 0: Primitive
+  // 1: Constructed
   switch (obj.tag) {
-    case 0xa0:
+    case 0xa0: // 10 1 00000 => Class is Context-Specific, P/C is Constructed and Tag Number is 0
       return toDart(ASN1Parser(obj.valueBytes()).nextObject());
-    case 0x86:
+    case 0x86: // 10 0 00110 => Class is Context-Specific, P/C is Primitive and Tag Number is 6
       return utf8.decode(obj.valueBytes());
   }
   throw ArgumentError(
