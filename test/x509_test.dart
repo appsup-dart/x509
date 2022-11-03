@@ -395,8 +395,8 @@ void main() {
     ]));
     test('should not be convert when set unknown policy identifier', () {
       var pi = PolicyInformation.fromAsn1(subject);
-      var expectStr = 'Policy: 1.2.504.247680.8.5.1.3.30\n' +
-          '\tCPS: http://www.example.com/test_cps.html\n' +
+      var expectStr = 'Policy: 1.2.504.247680.8.5.1.3.30\n'
+          '\tCPS: http://www.example.com/test_cps.html\n'
           '';
       expect(pi.toString(), expectStr);
     });

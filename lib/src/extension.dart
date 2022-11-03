@@ -383,11 +383,11 @@ class PolicyInformation {
   @override
   String toString([String prefix = '']) {
     var buffer = StringBuffer();
-    var piString;
+    String piString;
     try {
       piString = policyIdentifier.toString();
     } catch (e) {
-      if(e is UnknownOIDNameError) {
+      if (e is UnknownOIDNameError) {
         // It is unique definition policy. should not convert name.
         // In this case, to be just combined numbers.
         piString = policyIdentifier.nodes.map((i) => i.toString()).join('.');
@@ -540,7 +540,10 @@ class DistributionPoint {
   ///     reasons                 [1]     ReasonFlags OPTIONAL,
   ///     cRLIssuer               [2]     GeneralNames OPTIONAL }
   factory DistributionPoint.fromAsn1(ASN1Sequence sequence) {
-    var name = sequence.elements.isEmpty ? null : DistributionPointName.fromAsn1(ASN1Object.fromBytes(sequence.elements[0].valueBytes()));
+    var name = sequence.elements.isEmpty
+        ? null
+        : DistributionPointName.fromAsn1(
+            ASN1Object.fromBytes(sequence.elements[0].valueBytes()));
     var reasons = sequence.elements.length <= 1
         ? null
         : (sequence.elements[1] as ASN1BitString)
@@ -564,7 +567,8 @@ class DistributionPointName {
     'CRLIssuer',
   ];
 
-  DistributionPointName(this.choice, this.generalNames, this.relativeDistinguishedName);
+  DistributionPointName(
+      this.choice, this.generalNames, this.relativeDistinguishedName);
 
   // DistributionPointName ::= CHOICE {
   //   fullName [0] GeneralNames,
@@ -573,8 +577,8 @@ class DistributionPointName {
   factory DistributionPointName.fromAsn1(ASN1Object obj) {
     var choice = (0x1F & obj.tag);
     var childObj = ASN1Parser(obj.valueBytes()).nextObject();
-    var generalNames;
-    var relativeName;
+    GeneralNames? generalNames;
+    RelativeDistinguishedName? relativeName;
 
     switch (choice) {
       case 0:
@@ -584,26 +588,25 @@ class DistributionPointName {
         relativeName = RelativeDistinguishedName();
         break;
       default:
-        throw UnsupportedError('Not supported CHOICE ($choice) by DistributionPointName.');
+        throw UnsupportedError(
+            'Not supported CHOICE ($choice) by DistributionPointName.');
     }
     return DistributionPointName(choice, generalNames, relativeName);
   }
 
   @override
   String toString() {
-    var contentsString;
+    String contentsString;
     if (generalNames != null) {
       contentsString = generalNames.toString();
     } else {
       contentsString = relativeDistinguishedName.toString();
     }
-    return '${_choiceName[choice]}: ${contentsString}';
+    return '${_choiceName[choice]}: $contentsString';
   }
 }
 
-class RelativeDistinguishedName {
-
-}
+class RelativeDistinguishedName {}
 
 enum DistributionPointReason {
   unused,
@@ -746,19 +749,19 @@ class GeneralNames extends ExtensionValue {
 
   //GeneralNames :: = SEQUENCE SIZE (1..MAX) OF GeneralName
   factory GeneralNames.fromAsn1(ASN1Object obj) {
-    if(obj is ASN1Sequence) {
+    if (obj is ASN1Sequence) {
       var sequence = obj;
       return GeneralNames(sequence.elements.map((n) {
         return GeneralName.fromAsn1(n);
       }).toList());
     } else {
-      var _name = GeneralName.fromAsn1(obj);
-      return GeneralNames([_name]);
+      var name = GeneralName.fromAsn1(obj);
+      return GeneralNames([name]);
     }
   }
 
   @override
   String toString() {
-    return names.map((n) => n.toString()).join(", ");
+    return names.map((n) => n.toString()).join(', ');
   }
 }
