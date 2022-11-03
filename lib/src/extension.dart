@@ -52,8 +52,8 @@ class Extension {
   @override
   String toString([String prefix = '']) {
     var buffer = StringBuffer();
-    buffer.writeln("${prefix}$extnId: ${isCritical ? "critical" : ""}");
-    buffer.writeln('${prefix}\t$extnValue');
+    buffer.writeln("$prefix$extnId: ${isCritical ? "critical" : ""}");
+    buffer.writeln('$prefix\t$extnValue');
     return buffer.toString();
   }
 }
@@ -112,7 +112,7 @@ abstract class ExtensionValue {
 /// public key corresponding to the private key used to sign a certificate.
 class AuthorityKeyIdentifier extends ExtensionValue {
   final List<int>? keyIdentifier;
-  final authorityCertIssuer;
+  final GeneralNames? authorityCertIssuer;
   final BigInt? authorityCertSerialNumber;
 
   AuthorityKeyIdentifier(this.keyIdentifier, this.authorityCertIssuer,
@@ -129,14 +129,16 @@ class AuthorityKeyIdentifier extends ExtensionValue {
   ///
   ///   KeyIdentifier ::= OCTET STRING
   factory AuthorityKeyIdentifier.fromAsn1(ASN1Sequence sequence) {
-    var keyId, issuer, number;
+    Uint8List? keyId;
+    GeneralNames? issuer;
+    BigInt? number;
     for (var o in sequence.elements) {
       switch (o.tag & 0x1f) {
         case 0:
           keyId = o.contentBytes();
           break;
         case 1:
-          issuer = o;
+          issuer = GeneralNames.fromAsn1(o as ASN1Sequence);
           break;
         case 2:
           number =
@@ -383,7 +385,7 @@ class PolicyInformation {
     var buffer = StringBuffer();
     buffer.writeln('${prefix}Policy: $policyIdentifier');
     buffer.writeln(
-        policyQualifiers.map((q) => q.toString('${prefix}\t')).join('\n'));
+        policyQualifiers.map((q) => q.toString('$prefix\t')).join('\n'));
     return buffer.toString();
   }
 }
@@ -429,7 +431,7 @@ class PolicyQualifierInfo {
         return '${prefix}CPS: $cpsUri';
       case 2: // unotice
         return '${prefix}User Notice:\n'
-            '${userNotice?.toString('${prefix}\t')}';
+            '${userNotice?.toString('$prefix\t')}';
     }
     throw UnsupportedError(
         'Policy qualifier id $policyQualifierId not supported');
@@ -448,7 +450,8 @@ class UserNotice {
   ///     noticeRef        NoticeReference OPTIONAL,
   ///     explicitText     DisplayText OPTIONAL }
   factory UserNotice.fromAsn1(ASN1Sequence sequence) {
-    var noticeRef, explicitText;
+    NoticeReference? noticeRef;
+    String? explicitText;
     for (var e in sequence.elements) {
       if (e is ASN1Sequence) {
         noticeRef = NoticeReference.fromAsn1(e);
@@ -512,7 +515,7 @@ class CrlDistributionPoints extends ExtensionValue {
 }
 
 class DistributionPoint {
-  final String? name;
+  final DistributionPointName? name;
   final List<DistributionPointReason>? reasons;
   final String? crlIssuer;
 
@@ -525,7 +528,9 @@ class DistributionPoint {
   ///     reasons                 [1]     ReasonFlags OPTIONAL,
   ///     cRLIssuer               [2]     GeneralNames OPTIONAL }
   factory DistributionPoint.fromAsn1(ASN1Sequence sequence) {
-    var name = sequence.elements.isEmpty ? null : toDart(sequence.elements[0]);
+    var name = sequence.elements.isEmpty
+        ? null
+        : DistributionPointName.fromAsn1(sequence.elements[0] as ASN1Sequence);
     var reasons = sequence.elements.length <= 1
         ? null
         : (sequence.elements[1] as ASN1BitString)
@@ -537,6 +542,28 @@ class DistributionPoint {
         sequence.elements.length <= 2 ? null : toDart(sequence.elements[2]);
     return DistributionPoint(
         name: name, reasons: reasons, crlIssuer: crlIssuer);
+  }
+}
+
+class DistributionPointName {
+  final GeneralNames? fullName;
+  final dynamic nameRelativeToCrlIssuer;
+
+  DistributionPointName({this.fullName, this.nameRelativeToCrlIssuer});
+
+  /// The ASN.1 definition is:
+  ///
+  ///   DistributionPointName ::= CHOICE {
+  ///     fullName                [0]     GeneralNames,
+  ///     nameRelativeToCRLIssuer [1]     RelativeDistinguishedName }
+  factory DistributionPointName.fromAsn1(ASN1Sequence sequence) {
+    var fullName = sequence.elements.isEmpty
+        ? null
+        : GeneralNames.fromAsn1(sequence.elements[0] as ASN1Sequence);
+    var nameRelativeToCrlIssuer =
+        sequence.elements.length <= 1 ? null : toDart(sequence.elements[1]);
+    return DistributionPointName(
+        fullName: fullName, nameRelativeToCrlIssuer: nameRelativeToCrlIssuer);
   }
 }
 
@@ -629,7 +656,7 @@ class GeneralName {
     var tag = obj.tag;
     var isConstructed = (0xA0 & tag) == 0xA0;
     var choice = (0x1F & tag);
-    var contents;
+    ASN1Object? contents;
     if (isConstructed) {
       contents = ASN1Parser(obj.valueBytes()).nextObject();
     } else {
@@ -654,12 +681,12 @@ class GeneralName {
       }
     }
     return GeneralName(
-        isConstructed: isConstructed, choice: choice, contents: contents);
+        isConstructed: isConstructed, choice: choice, contents: contents!);
   }
 
   @override
   String toString() {
-    var contentsString;
+    String contentsString;
     if (contents is ASN1IA5String) {
       contentsString = (contents as ASN1IA5String).stringValue;
     } else if (contents is ASN1OctetString) {
@@ -667,7 +694,7 @@ class GeneralName {
     } else {
       contentsString = contents.toString();
     }
-    return '${_choiceName[choice]}:${contentsString}';
+    return '${_choiceName[choice]}:$contentsString';
   }
 }
 

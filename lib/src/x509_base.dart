@@ -51,13 +51,15 @@ class Name {
 
   ASN1Sequence toAsn1() {
     var seq = ASN1Sequence();
-    names.forEach((n) {
+    for (var n in names) {
       var set = ASN1Set();
       n.forEach((k, v) {
-        set.add(ASN1Sequence()..add(fromDart(k))..add(fromDart(v)));
+        set.add(ASN1Sequence()
+          ..add(fromDart(k))
+          ..add(fromDart(v)));
       });
       seq.add(set);
-    });
+    }
     return seq;
   }
 
@@ -78,14 +80,16 @@ class Validity {
       );
 
   ASN1Sequence toAsn1() {
-    return ASN1Sequence()..add(fromDart(notBefore))..add(fromDart(notAfter));
+    return ASN1Sequence()
+      ..add(fromDart(notBefore))
+      ..add(fromDart(notAfter));
   }
 
   @override
   String toString([String prefix = '']) {
     var buffer = StringBuffer();
-    buffer.writeln('${prefix}Not Before: ${notBefore}');
-    buffer.writeln('${prefix}Not After: ${notAfter}');
+    buffer.writeln('${prefix}Not Before: $notBefore');
+    buffer.writeln('${prefix}Not After: $notAfter');
     return buffer.toString();
   }
 }
@@ -121,7 +125,7 @@ class SubjectPublicKeyInfo {
 
 class AlgorithmIdentifier {
   final ObjectIdentifier algorithm;
-  final parameters;
+  final dynamic parameters;
 
   AlgorithmIdentifier(this.algorithm, this.parameters);
 
@@ -145,8 +149,7 @@ class AlgorithmIdentifier {
   }
 
   @override
-  String toString() =>
-      "${algorithm}${parameters == null ? "" : "($parameters)"}";
+  String toString() => "$algorithm${parameters == null ? "" : "($parameters)"}";
 }
 
 class PrivateKeyInfo {

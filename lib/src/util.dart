@@ -3,7 +3,6 @@ library x509.conversions;
 import 'dart:convert';
 
 import 'package:asn1lib/asn1lib.dart';
-import 'package:crypto_keys/crypto_keys.dart' hide AlgorithmIdentifier;
 
 import '../x509.dart';
 
@@ -51,7 +50,7 @@ KeyPair ecKeyPairFromAsn1(ASN1Sequence sequence) {
   }
   curve ??= _lengthToCurve(l);
 
-  var publicKey;
+  EcPublicKey? publicKey;
   if (sequence.elements.length > i && sequence.elements[i].tag == 0xa1) {
     var e = ASN1Parser(sequence.elements[i].contentBytes()!).nextObject()
         as ASN1BitString;
@@ -74,7 +73,7 @@ Identifier _curveObjectIdentifierToIdentifier(ObjectIdentifier id) {
     'secp521r1': curves.p521,
   }[id.name];
   if (curve == null) {
-    throw UnsupportedError('Curves of type ${id} not supported');
+    throw UnsupportedError('Curves of type $id not supported');
   }
   return curve;
 }
@@ -168,7 +167,7 @@ String keyToString(Key key, [String prefix = '']) {
     var buffer = StringBuffer();
     var l = key.modulus.bitLength;
     buffer.writeln('${prefix}Modulus ($l bit):');
-    buffer.writeln(toHexString(key.modulus, '${prefix}\t', 15));
+    buffer.writeln(toHexString(key.modulus, '$prefix\t', 15));
     buffer.writeln('${prefix}Exponent: ${key.exponent}');
     return buffer.toString();
   }
@@ -178,7 +177,9 @@ String keyToString(Key key, [String prefix = '']) {
 ASN1BitString keyToAsn1(Key key) {
   var s = ASN1Sequence();
   if (key is RsaPublicKey) {
-    s..add(ASN1Integer(key.modulus))..add(ASN1Integer(key.exponent));
+    s
+      ..add(ASN1Integer(key.modulus))
+      ..add(ASN1Integer(key.exponent));
   }
   return ASN1BitString(s.encodedBytes);
 }
@@ -213,12 +214,16 @@ ASN1Object fromDart(dynamic obj) {
   if (obj is List<int>) return ASN1BitString(obj);
   if (obj is List) {
     var s = ASN1Sequence();
-    obj.forEach((v) => s.add(fromDart(v)));
+    for (var v in obj) {
+      s.add(fromDart(v));
+    }
     return s;
   }
   if (obj is Set) {
     var s = ASN1Set();
-    obj.forEach((v) => s.add(fromDart(v)));
+    for (var v in obj) {
+      s.add(fromDart(v));
+    }
     return s;
   }
   if (obj is BigInt) return ASN1Integer(obj);

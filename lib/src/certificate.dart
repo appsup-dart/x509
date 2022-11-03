@@ -53,7 +53,7 @@ class X509Certificate implements Certificate {
     buffer.writeln('\tData:');
     buffer.writeln(tbsCertificate.toString('\t\t'));
     buffer.writeln('\tSignature Algorithm: $signatureAlgorithm');
-    buffer.writeln(toHexString(toBigInt(signatureValue!), '${prefix}\t\t', 18));
+    buffer.writeln(toHexString(toBigInt(signatureValue!), '$prefix\t\t', 18));
     return buffer.toString();
   }
 }
@@ -138,8 +138,8 @@ class TbsCertificate {
       elements = elements.skip(1).toList();
     }
     var optionals = elements.skip(6);
-    var iUid, sUid;
-    var ex;
+    Uint8List? iUid, sUid;
+    List<Extension>? ex;
     for (var o in optionals) {
       if (o.tag >> 6 == 2) {
         // context
@@ -205,19 +205,19 @@ class TbsCertificate {
   @override
   String toString([String prefix = '']) {
     var buffer = StringBuffer();
-    buffer.writeln('${prefix}Version: ${version}');
-    buffer.writeln('${prefix}Serial Number: ${serialNumber}');
-    buffer.writeln('${prefix}Signature Algorithm: ${signature}');
-    buffer.writeln('${prefix}Issuer: ${issuer}');
+    buffer.writeln('${prefix}Version: $version');
+    buffer.writeln('${prefix}Serial Number: $serialNumber');
+    buffer.writeln('${prefix}Signature Algorithm: $signature');
+    buffer.writeln('${prefix}Issuer: $issuer');
     buffer.writeln('${prefix}Validity:');
     buffer.writeln(validity?.toString('$prefix\t') ?? '');
-    buffer.writeln('${prefix}Subject: ${subject}');
+    buffer.writeln('${prefix}Subject: $subject');
     buffer.writeln('${prefix}Subject Public Key Info:');
-    buffer.writeln(subjectPublicKeyInfo?.toString('${prefix}\t') ?? '');
+    buffer.writeln(subjectPublicKeyInfo?.toString('$prefix\t') ?? '');
     if (extensions != null && extensions!.isNotEmpty) {
       buffer.writeln('${prefix}X509v3 extensions:');
       for (var e in extensions!) {
-        buffer.writeln(e.toString('${prefix}\t'));
+        buffer.writeln(e.toString('$prefix\t'));
       }
     }
     return buffer.toString();

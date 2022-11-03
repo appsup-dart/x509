@@ -71,7 +71,7 @@ class ObjectIdentifier {
   }
 
   @override
-  String toString() => '$name';
+  String toString() => name;
 
   static const _tree = {
     0: {
