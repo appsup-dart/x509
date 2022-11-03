@@ -101,6 +101,8 @@ abstract class ExtensionValue {
       switch (id.nodes.last) {
         case 1:
           return AuthorityInformationAccess.fromAsn1(obj as ASN1Sequence);
+        case 3:
+          return QCStatements.fromAsn1(obj as ASN1Sequence);
       }
     }
     throw UnimplementedError(
@@ -673,6 +675,48 @@ class AuthorityInformationAccess extends ExtensionValue {
       for (var e in sequence.elements)
         AccessDescription.fromAsn1(e as ASN1Sequence)
     ]);
+  }
+}
+
+class QCStatements extends ExtensionValue {
+  final List<QCStatement> statements;
+
+  QCStatements({required this.statements});
+
+  factory QCStatements.fromAsn1(ASN1Sequence sequence) {
+    return QCStatements(statements: [
+      for (var i in sequence.elements) QCStatement.fromAsn1(i as ASN1Sequence)
+    ]);
+  }
+}
+
+class QCStatement {
+  final ObjectIdentifier statementId;
+  final dynamic qcStatementInfo;
+
+  /// The ASN.1 definition is:
+  ///
+  ///  QCStatement ::= SEQUENCE {
+  ///  statementId        OBJECT IDENTIFIER,
+  ///  statementInfo      ANY DEFINED BY statementId OPTIONAL}
+  QCStatement({required this.statementId, required this.qcStatementInfo});
+
+  factory QCStatement.fromAsn1(ASN1Sequence sequence) {
+    var statementId = ObjectIdentifier.fromAsn1(
+        ASN1ObjectIdentifier.fromBytes(sequence.elements[0].encodedBytes));
+
+    dynamic qcStatementInfo;
+    if (sequence.elements.length > 1) {
+      qcStatementInfo = toDart(sequence.elements[1]);
+    }
+
+    return QCStatement(
+        statementId: statementId, qcStatementInfo: qcStatementInfo);
+  }
+
+  @override
+  String toString() {
+    return 'QCStatement{statementId: $statementId, qcStatementInfo: $qcStatementInfo}';
   }
 }
 

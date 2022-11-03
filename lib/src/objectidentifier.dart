@@ -71,7 +71,13 @@ class ObjectIdentifier {
   }
 
   @override
-  String toString() => name;
+  String toString() {
+    try {
+      return name;
+    } on UnknownOIDNameError {
+      return nodes.join('.');
+    }
+  }
 
   static const _tree = {
     0: {
@@ -88,6 +94,44 @@ class ObjectIdentifier {
                 null: 'pilotAttributeType',
                 25: {null: 'domainComponent'}
               }
+            }
+          }
+        }
+      },
+      4: {
+        null: 'identified-organization',
+        0: {
+          null: 'etsi',
+          1862: {
+            null: 'qc-profile',
+            0: {
+              null: 'id-mod',
+              2: 'id-mod-qc-profile-2',
+            },
+            1: {
+              null: 'qcs',
+              1: 'qcs-QcCompliance',
+              2: 'qcs-QcLimitValue',
+              3: 'qcs-QcRetentionPeriod',
+              4: 'qcs-QcSSCD',
+              5: 'qcs-QcPDS',
+              6: {
+                null: 'qcs-QcType',
+                1: 'qct-esign',
+                2: 'qct-eseal',
+                3: 'qct-web',
+              }
+            }
+          },
+          194121: {
+            null: 'qualified-certificate-policies',
+            1: {
+              null: 'policy-identifiers',
+              0: 'qcp-natural',
+              1: 'qcp-legal',
+              2: 'qcp-natural-qscd',
+              3: 'qcp-legal-qscd',
+              4: 'qcp-web',
             }
           }
         }
@@ -282,6 +326,11 @@ class ObjectIdentifier {
                     4: 'emailProtection',
                     8: 'timeStamping',
                     9: 'OCSPSigning'
+                  },
+                  11: {
+                    null: 'qcs',
+                    1: 'pkixQCSyntax-v1',
+                    2: 'id-qcs-pkixQCSyntax-v2',
                   }
                 }
               }
@@ -498,5 +547,5 @@ class ObjectIdentifier {
 // Throw when There OID name is unknown.
 // For example, be defined unique extension.
 class UnknownOIDNameError extends StateError {
-  UnknownOIDNameError(String message): super(message);
+  UnknownOIDNameError(String message) : super(message);
 }
