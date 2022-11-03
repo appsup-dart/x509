@@ -65,7 +65,7 @@ class ObjectIdentifier {
       if (tree is Map) return tree[null];
       return tree;
     } catch (e) {
-      throw StateError(
+      throw UnknownOIDNameError(
           'Unable to get name of ObjectIdentifier with nodes $nodes');
     }
   }
@@ -493,4 +493,10 @@ class ObjectIdentifier {
       }
     }
   };
+}
+
+// Throw when There OID name is unknown.
+// For example, be defined unique extension.
+class UnknownOIDNameError extends StateError {
+  UnknownOIDNameError(String message): super(message);
 }
