@@ -191,7 +191,7 @@ void main() {
     });
   });
 
-  group('v3 extension', () {
+  group('v3 extension General Name', () {
     var generalNameEncodeBytes = [
       48,
       19,
@@ -228,6 +228,65 @@ void main() {
       var oid = ObjectIdentifier([2, 5, 29, 17]);
       var c = ExtensionValue.fromAsn1(extension, oid) as GeneralNames;
       expect(c.names[0].toString(), 'DNS:www.chaintope.com');
+    });
+  });
+
+  group('v3 extension DistributionPoint', () {
+    var asn1Seq = ASN1Sequence.fromBytes(Uint8List.fromList([
+      0x30,
+      0x2d,
+      0xa0,
+      0x2b,
+      0xa0,
+      0x29,
+      0x86,
+      0x27,
+      0x68,
+      0x74,
+      0x74,
+      0x70,
+      0x3a,
+      0x2f,
+      0x2f,
+      0x63,
+      0x72,
+      0x6c,
+      0x2e,
+      0x65,
+      0x78,
+      0x61,
+      0x6d,
+      0x70,
+      0x6c,
+      0x65,
+      0x2e,
+      0x63,
+      0x6f,
+      0x6d,
+      0x2f,
+      0x66,
+      0x6c,
+      0x75,
+      0x74,
+      0x74,
+      0x65,
+      0x72,
+      0x5f,
+      0x74,
+      0x65,
+      0x73,
+      0x74,
+      0x2e,
+      0x63,
+      0x72,
+      0x6c
+    ]));
+
+    test('URL only  Distribution Point', () {
+      var dp = DistributionPoint.fromAsn1(asn1Seq);
+      expect(dp.name.toString(),
+          'Full Name: URI:http://crl.example.com/flutter_test.crl');
+      expect(dp.name, isA<DistributionPointName>());
     });
   });
 
