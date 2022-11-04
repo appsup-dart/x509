@@ -85,7 +85,8 @@ abstract class ExtensionValue {
         case 18: // issuer alternative name extension
           return GeneralNames.fromAsn1(obj as ASN1Sequence);
         case 9: // TODO: subject directory attributes extension
-        case 30: // TODO: name constraints extension
+        case 30:
+          return NameConstraints.fromAsn1(obj as ASN1Sequence);
         case 33: // TODO: policy mappings extension
         case 36: // TODO: policy constraints extension
           break;
@@ -840,5 +841,54 @@ class GeneralNames extends ExtensionValue {
   @override
   String toString() {
     return names.map((n) => n.toString()).join(', ');
+  }
+}
+
+class NameConstraints extends ExtensionValue {
+  final List<GeneralSubtree> permittedSubtrees;
+
+  final List<GeneralSubtree> excludedSubtrees;
+
+  // NameConstraints ::= SEQUENCE {
+  //   permittedSubtrees       [0]     GeneralSubtrees OPTIONAL,
+  //   excludedSubtrees        [1]     GeneralSubtrees OPTIONAL }
+  factory NameConstraints.fromAsn1(ASN1Sequence obj) {
+    var s1 = obj.elements.isNotEmpty ? obj.elements[0] as ASN1Sequence : null;
+    var s2 = obj.elements.length > 1 ? obj.elements[1] as ASN1Sequence : null;
+
+    return NameConstraints(
+      permittedSubtrees: [
+        if (s1 != null)
+          for (var v in s1.elements) GeneralSubtree.fromAsn1(v as ASN1Sequence),
+      ],
+      excludedSubtrees: [
+        if (s2 != null)
+          for (var v in s2.elements) GeneralSubtree.fromAsn1(v as ASN1Sequence),
+      ],
+    );
+  }
+
+  NameConstraints(
+      {this.permittedSubtrees = const [], this.excludedSubtrees = const []});
+}
+
+class GeneralSubtree {
+  final GeneralName base;
+
+  final int minimum;
+
+  final int? maximum;
+
+  GeneralSubtree({required this.base, this.minimum = 0, this.maximum});
+
+  // GeneralSubtree ::= SEQUENCE {
+  //   base                    GeneralName,
+  //   minimum         [0]     BaseDistance DEFAULT 0,
+  //   maximum         [1]     BaseDistance OPTIONAL }
+  factory GeneralSubtree.fromAsn1(ASN1Sequence obj) {
+    return GeneralSubtree(
+        base: GeneralName.fromAsn1(obj.elements[0]),
+        minimum: obj.elements.length > 1 ? toDart(obj.elements[1]) : 0,
+        maximum: obj.elements.length > 2 ? toDart(obj.elements[2]) : null);
   }
 }
