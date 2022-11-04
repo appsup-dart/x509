@@ -104,6 +104,8 @@ abstract class ExtensionValue {
           return AuthorityInformationAccess.fromAsn1(obj as ASN1Sequence);
         case 3:
           return QCStatements.fromAsn1(obj as ASN1Sequence);
+        case 14:
+          return ProxyCertInfo.fromAsn1(obj as ASN1Sequence);
       }
     }
     throw UnimplementedError(
@@ -891,4 +893,42 @@ class GeneralSubtree {
         minimum: obj.elements.length > 1 ? toDart(obj.elements[1]) : 0,
         maximum: obj.elements.length > 2 ? toDart(obj.elements[2]) : null);
   }
+}
+
+class ProxyCertInfo extends ExtensionValue {
+  final BigInt? pCPathLenConstraint;
+
+  final ProxyPolicy proxyPolicy;
+
+  // ProxyCertInfoExtension  ::= SEQUENCE {
+  //   pCPathLenConstraint     ProxyCertPathLengthConstraint OPTIONAL,
+  //   proxyPolicy             ProxyPolicy
+  // }
+  factory ProxyCertInfo.fromAsn1(ASN1Sequence obj) {
+    return ProxyCertInfo(
+        pCPathLenConstraint:
+            obj.elements.length > 1 ? toDart(obj.elements[0]) : null,
+        proxyPolicy: ProxyPolicy.fromAsn1(obj.elements.last as ASN1Sequence));
+  }
+
+  ProxyCertInfo({this.pCPathLenConstraint, required this.proxyPolicy});
+}
+
+class ProxyPolicy {
+  final ObjectIdentifier policyLanguage;
+
+  final String? policy;
+
+  // ProxyPolicy  ::= SEQUENCE {
+  //   policyLanguage          OBJECT IDENTIFIER,
+  //   policy                  OCTET STRING OPTIONAL
+  // }
+  factory ProxyPolicy.fromAsn1(ASN1Sequence obj) {
+    return ProxyPolicy(
+        policyLanguage:
+            ObjectIdentifier.fromAsn1(obj.elements[0] as ASN1ObjectIdentifier),
+        policy: obj.elements.length > 1 ? toDart(obj.elements[1]) : null);
+  }
+
+  ProxyPolicy({required this.policyLanguage, this.policy});
 }
