@@ -145,7 +145,7 @@ class AuthorityKeyIdentifier extends ExtensionValue {
           keyId = o.contentBytes();
           break;
         case 1:
-          issuer = GeneralNames.fromAsn1(o as ASN1Sequence);
+          issuer = GeneralNames.fromAsn1(o);
           break;
         case 2:
           number =
