@@ -52,8 +52,8 @@ class Extension {
   @override
   String toString([String prefix = '']) {
     var buffer = StringBuffer();
-    buffer.writeln("${prefix}$extnId: ${isCritical ? "critical" : ""}");
-    buffer.writeln('${prefix}\t$extnValue');
+    buffer.writeln("$prefix$extnId: ${isCritical ? "critical" : ""}");
+    buffer.writeln('$prefix\t$extnValue');
     return buffer.toString();
   }
 }
@@ -86,7 +86,8 @@ abstract class ExtensionValue {
         case 18: // issuer alternative name extension
           return GeneralNames.fromAsn1(obj as ASN1Sequence);
         case 9: // TODO: subject directory attributes extension
-        case 30: // TODO: name constraints extension
+        case 30:
+          return NameConstraints.fromAsn1(obj as ASN1Sequence);
         case 33: // TODO: policy mappings extension
         case 36: // TODO: policy constraints extension
           break;
@@ -94,12 +95,18 @@ abstract class ExtensionValue {
           return BasicConstraints.fromAsn1(obj as ASN1Sequence);
         case 37:
           return ExtendedKeyUsage.fromAsn1(obj as ASN1Sequence);
+        case 16:
+          return PrivateKeyUsagePeriod.fromAsn1(obj as ASN1Sequence);
       }
     }
     if (id.parent == peId) {
       switch (id.nodes.last) {
         case 1:
           return AuthorityInformationAccess.fromAsn1(obj as ASN1Sequence);
+        case 3:
+          return QCStatements.fromAsn1(obj as ASN1Sequence);
+        case 14:
+          return ProxyCertInfo.fromAsn1(obj as ASN1Sequence);
       }
     }
     if (id.parent == goog24Id) {
@@ -119,7 +126,7 @@ abstract class ExtensionValue {
 /// public key corresponding to the private key used to sign a certificate.
 class AuthorityKeyIdentifier extends ExtensionValue {
   final List<int>? keyIdentifier;
-  final authorityCertIssuer;
+  final GeneralNames? authorityCertIssuer;
   final BigInt? authorityCertSerialNumber;
 
   AuthorityKeyIdentifier(this.keyIdentifier, this.authorityCertIssuer,
@@ -136,14 +143,16 @@ class AuthorityKeyIdentifier extends ExtensionValue {
   ///
   ///   KeyIdentifier ::= OCTET STRING
   factory AuthorityKeyIdentifier.fromAsn1(ASN1Sequence sequence) {
-    var keyId, issuer, number;
+    Uint8List? keyId;
+    GeneralNames? issuer;
+    BigInt? number;
     for (var o in sequence.elements) {
       switch (o.tag & 0x1f) {
         case 0:
           keyId = o.contentBytes();
           break;
         case 1:
-          issuer = o;
+          issuer = GeneralNames.fromAsn1(o);
           break;
         case 2:
           number =
@@ -298,6 +307,37 @@ class ExtendedKeyUsage extends ExtensionValue {
   String toString() => ids.join(', ');
 }
 
+class PrivateKeyUsagePeriod extends ExtensionValue {
+  final DateTime? notBefore;
+  final DateTime? notAfter;
+
+  PrivateKeyUsagePeriod({this.notBefore, this.notAfter});
+
+  /// Creates a basic constraints extension value from an [ASN1Sequence].
+  ///
+  /// The ASN.1 definition is:
+  ///
+  ///    PrivateKeyUsagePeriod ::= SEQUENCE {
+  ///      notBefore       [0]     GeneralizedTime OPTIONAL,
+  ///      notAfter        [1]     GeneralizedTime OPTIONAL }
+  factory PrivateKeyUsagePeriod.fromAsn1(ASN1Sequence sequence) {
+    DateTime? notBefore;
+    DateTime? notAfter;
+    for (ASN1Object o in sequence.elements) {
+      var taggedObject = o;
+      if (taggedObject.tag == 128) {
+        notBefore = ASN1GeneralizedTime.fromBytes(o.encodedBytes).dateTimeValue;
+      } else if (taggedObject.tag == 129) {
+        notAfter = ASN1GeneralizedTime.fromBytes(o.encodedBytes).dateTimeValue;
+      }
+    }
+    return PrivateKeyUsagePeriod(notBefore: notBefore, notAfter: notAfter);
+  }
+
+  @override
+  String toString() => 'NotBefore:$notBefore, NotAfter:$notAfter';
+}
+
 /// The basic constraints extension identifies whether the subject of the
 /// certificate is a CA and the maximum depth of valid certification paths
 /// that include this certificate.
@@ -388,9 +428,21 @@ class PolicyInformation {
   @override
   String toString([String prefix = '']) {
     var buffer = StringBuffer();
-    buffer.writeln('${prefix}Policy: $policyIdentifier');
+    String piString;
+    try {
+      piString = policyIdentifier.toString();
+    } catch (e) {
+      if (e is UnknownOIDNameError) {
+        // It is unique definition policy. should not convert name.
+        // In this case, to be just combined numbers.
+        piString = policyIdentifier.nodes.map((i) => i.toString()).join('.');
+      } else {
+        rethrow;
+      }
+    }
+    buffer.writeln('${prefix}Policy: $piString');
     buffer.writeln(
-        policyQualifiers.map((q) => q.toString('${prefix}\t')).join('\n'));
+        policyQualifiers.map((q) => q.toString('$prefix\t')).join('\n'));
     return buffer.toString();
   }
 }
@@ -436,7 +488,7 @@ class PolicyQualifierInfo {
         return '${prefix}CPS: $cpsUri';
       case 2: // unotice
         return '${prefix}User Notice:\n'
-            '${userNotice?.toString('${prefix}\t')}';
+            '${userNotice?.toString('$prefix\t')}';
     }
     throw UnsupportedError(
         'Policy qualifier id $policyQualifierId not supported');
@@ -455,7 +507,8 @@ class UserNotice {
   ///     noticeRef        NoticeReference OPTIONAL,
   ///     explicitText     DisplayText OPTIONAL }
   factory UserNotice.fromAsn1(ASN1Sequence sequence) {
-    var noticeRef, explicitText;
+    NoticeReference? noticeRef;
+    String? explicitText;
     for (var e in sequence.elements) {
       if (e is ASN1Sequence) {
         noticeRef = NoticeReference.fromAsn1(e);
@@ -519,7 +572,7 @@ class CrlDistributionPoints extends ExtensionValue {
 }
 
 class DistributionPoint {
-  final String? name;
+  final DistributionPointName? name;
   final List<DistributionPointReason>? reasons;
   final String? crlIssuer;
 
@@ -532,7 +585,10 @@ class DistributionPoint {
   ///     reasons                 [1]     ReasonFlags OPTIONAL,
   ///     cRLIssuer               [2]     GeneralNames OPTIONAL }
   factory DistributionPoint.fromAsn1(ASN1Sequence sequence) {
-    var name = sequence.elements.isEmpty ? null : toDart(sequence.elements[0]);
+    var name = sequence.elements.isEmpty
+        ? null
+        : DistributionPointName.fromAsn1(
+            ASN1Object.fromBytes(sequence.elements[0].valueBytes()));
     var reasons = sequence.elements.length <= 1
         ? null
         : (sequence.elements[1] as ASN1BitString)
@@ -546,6 +602,56 @@ class DistributionPoint {
         name: name, reasons: reasons, crlIssuer: crlIssuer);
   }
 }
+
+class DistributionPointName {
+  final int choice;
+  final GeneralNames? generalNames;
+  final RelativeDistinguishedName? relativeDistinguishedName;
+  static final _choiceName = [
+    'Full Name',
+    'CRLIssuer',
+  ];
+
+  DistributionPointName(
+      this.choice, this.generalNames, this.relativeDistinguishedName);
+
+  // DistributionPointName ::= CHOICE {
+  //   fullName [0] GeneralNames,
+  //   nameRelativeToCRLIssuer [1] RelativeDistinguishedName
+  // }
+  factory DistributionPointName.fromAsn1(ASN1Object obj) {
+    var choice = (0x1F & obj.tag);
+    var childObj = ASN1Parser(obj.valueBytes()).nextObject();
+    GeneralNames? generalNames;
+    RelativeDistinguishedName? relativeName;
+
+    switch (choice) {
+      case 0:
+        generalNames = GeneralNames.fromAsn1(childObj);
+        break;
+      case 1:
+        relativeName = RelativeDistinguishedName();
+        break;
+      default:
+        throw UnsupportedError(
+            'Not supported CHOICE ($choice) by DistributionPointName.');
+    }
+    return DistributionPointName(choice, generalNames, relativeName);
+  }
+
+  @override
+  String toString() {
+    String contentsString;
+    if (generalNames != null) {
+      contentsString = generalNames.toString();
+    } else {
+      contentsString = relativeDistinguishedName.toString();
+    }
+    return '${_choiceName[choice]}: $contentsString';
+  }
+}
+
+class RelativeDistinguishedName {}
 
 enum DistributionPointReason {
   unused,
@@ -579,6 +685,48 @@ class AuthorityInformationAccess extends ExtensionValue {
       for (var e in sequence.elements)
         AccessDescription.fromAsn1(e as ASN1Sequence)
     ]);
+  }
+}
+
+class QCStatements extends ExtensionValue {
+  final List<QCStatement> statements;
+
+  QCStatements({required this.statements});
+
+  factory QCStatements.fromAsn1(ASN1Sequence sequence) {
+    return QCStatements(statements: [
+      for (var i in sequence.elements) QCStatement.fromAsn1(i as ASN1Sequence)
+    ]);
+  }
+}
+
+class QCStatement {
+  final ObjectIdentifier statementId;
+  final dynamic qcStatementInfo;
+
+  /// The ASN.1 definition is:
+  ///
+  ///  QCStatement ::= SEQUENCE {
+  ///  statementId        OBJECT IDENTIFIER,
+  ///  statementInfo      ANY DEFINED BY statementId OPTIONAL}
+  QCStatement({required this.statementId, required this.qcStatementInfo});
+
+  factory QCStatement.fromAsn1(ASN1Sequence sequence) {
+    var statementId = ObjectIdentifier.fromAsn1(
+        ASN1ObjectIdentifier.fromBytes(sequence.elements[0].encodedBytes));
+
+    dynamic qcStatementInfo;
+    if (sequence.elements.length > 1) {
+      qcStatementInfo = toDart(sequence.elements[1]);
+    }
+
+    return QCStatement(
+        statementId: statementId, qcStatementInfo: qcStatementInfo);
+  }
+
+  @override
+  String toString() {
+    return 'QCStatement{statementId: $statementId, qcStatementInfo: $qcStatementInfo}';
   }
 }
 
@@ -627,7 +775,7 @@ class GeneralName {
     'x400Address',
     'directoryName',
     'ediPartyName',
-    'uniformResourceIdentifier',
+    'URI',
     'IPAddress',
     'registeredID',
   ];
@@ -636,7 +784,7 @@ class GeneralName {
     var tag = obj.tag;
     var isConstructed = (0xA0 & tag) == 0xA0;
     var choice = (0x1F & tag);
-    var contents;
+    ASN1Object? contents;
     if (isConstructed) {
       contents = ASN1Parser(obj.valueBytes()).nextObject();
     } else {
@@ -646,27 +794,30 @@ class GeneralName {
         case 6:
           contents = ASN1IA5String(String.fromCharCodes(obj.valueBytes()));
           break;
-        case 7:
+        case 7: // IPAddress (OctetString)
           contents = ASN1OctetString(obj.valueBytes());
           break;
-        case 8:
+        case 8: // registeredID (ObjectIdentifier)
           contents = ASN1ObjectIdentifier.fromBytes(obj.valueBytes());
           break;
         case 0: // TODO: unimplemented.
         case 3:
         case 4:
-        case 5:
+        case 5: // ediPartyName
+          //  EDIPartyName ::= SEQUENCE {
+          //   nameAssigner            [0]     DirectoryString OPTIONAL,
+          //   partyName               [1]     DirectoryString }
           log('Warning Not Supported CHOICE($choice).');
           contents = obj;
       }
     }
     return GeneralName(
-        isConstructed: isConstructed, choice: choice, contents: contents);
+        isConstructed: isConstructed, choice: choice, contents: contents!);
   }
 
   @override
   String toString() {
-    var contentsString;
+    String contentsString;
     if (contents is ASN1IA5String) {
       contentsString = (contents as ASN1IA5String).stringValue;
     } else if (contents is ASN1OctetString) {
@@ -674,7 +825,7 @@ class GeneralName {
     } else {
       contentsString = contents.toString();
     }
-    return '${_choiceName[choice]}:${contentsString}';
+    return '${_choiceName[choice]}:$contentsString';
   }
 }
 
@@ -684,11 +835,109 @@ class GeneralNames extends ExtensionValue {
   GeneralNames(this.names);
 
   //GeneralNames :: = SEQUENCE SIZE (1..MAX) OF GeneralName
-  factory GeneralNames.fromAsn1(ASN1Sequence sequence) {
-    return GeneralNames(sequence.elements.map((n) {
-      return GeneralName.fromAsn1(n);
-    }).toList());
+  factory GeneralNames.fromAsn1(ASN1Object obj) {
+    if (obj is ASN1Sequence) {
+      var sequence = obj;
+      return GeneralNames(sequence.elements.map((n) {
+        return GeneralName.fromAsn1(n);
+      }).toList());
+    } else {
+      var name = GeneralName.fromAsn1(obj);
+      return GeneralNames([name]);
+    }
   }
+
+  @override
+  String toString() {
+    return names.map((n) => n.toString()).join(', ');
+  }
+}
+
+class NameConstraints extends ExtensionValue {
+  final List<GeneralSubtree> permittedSubtrees;
+
+  final List<GeneralSubtree> excludedSubtrees;
+
+  // NameConstraints ::= SEQUENCE {
+  //   permittedSubtrees       [0]     GeneralSubtrees OPTIONAL,
+  //   excludedSubtrees        [1]     GeneralSubtrees OPTIONAL }
+  factory NameConstraints.fromAsn1(ASN1Sequence obj) {
+    var s1 = obj.elements.isNotEmpty ? obj.elements[0] as ASN1Sequence : null;
+    var s2 = obj.elements.length > 1 ? obj.elements[1] as ASN1Sequence : null;
+
+    return NameConstraints(
+      permittedSubtrees: [
+        if (s1 != null)
+          for (var v in s1.elements) GeneralSubtree.fromAsn1(v as ASN1Sequence),
+      ],
+      excludedSubtrees: [
+        if (s2 != null)
+          for (var v in s2.elements) GeneralSubtree.fromAsn1(v as ASN1Sequence),
+      ],
+    );
+  }
+
+  NameConstraints(
+      {this.permittedSubtrees = const [], this.excludedSubtrees = const []});
+}
+
+class GeneralSubtree {
+  final GeneralName base;
+
+  final int minimum;
+
+  final int? maximum;
+
+  GeneralSubtree({required this.base, this.minimum = 0, this.maximum});
+
+  // GeneralSubtree ::= SEQUENCE {
+  //   base                    GeneralName,
+  //   minimum         [0]     BaseDistance DEFAULT 0,
+  //   maximum         [1]     BaseDistance OPTIONAL }
+  factory GeneralSubtree.fromAsn1(ASN1Sequence obj) {
+    return GeneralSubtree(
+        base: GeneralName.fromAsn1(obj.elements[0]),
+        minimum: obj.elements.length > 1 ? toDart(obj.elements[1]) : 0,
+        maximum: obj.elements.length > 2 ? toDart(obj.elements[2]) : null);
+  }
+}
+
+class ProxyCertInfo extends ExtensionValue {
+  final BigInt? pCPathLenConstraint;
+
+  final ProxyPolicy proxyPolicy;
+
+  // ProxyCertInfoExtension  ::= SEQUENCE {
+  //   pCPathLenConstraint     ProxyCertPathLengthConstraint OPTIONAL,
+  //   proxyPolicy             ProxyPolicy
+  // }
+  factory ProxyCertInfo.fromAsn1(ASN1Sequence obj) {
+    return ProxyCertInfo(
+        pCPathLenConstraint:
+            obj.elements.length > 1 ? toDart(obj.elements[0]) : null,
+        proxyPolicy: ProxyPolicy.fromAsn1(obj.elements.last as ASN1Sequence));
+  }
+
+  ProxyCertInfo({this.pCPathLenConstraint, required this.proxyPolicy});
+}
+
+class ProxyPolicy {
+  final ObjectIdentifier policyLanguage;
+
+  final String? policy;
+
+  // ProxyPolicy  ::= SEQUENCE {
+  //   policyLanguage          OBJECT IDENTIFIER,
+  //   policy                  OCTET STRING OPTIONAL
+  // }
+  factory ProxyPolicy.fromAsn1(ASN1Sequence obj) {
+    return ProxyPolicy(
+        policyLanguage:
+            ObjectIdentifier.fromAsn1(obj.elements[0] as ASN1ObjectIdentifier),
+        policy: obj.elements.length > 1 ? toDart(obj.elements[1]) : null);
+  }
+
+  ProxyPolicy({required this.policyLanguage, this.policy});
 }
 
 class SctList extends ExtensionValue {
