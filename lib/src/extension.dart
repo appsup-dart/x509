@@ -40,13 +40,17 @@ class Extension {
       critical = toDart(sequence.elements[1]);
       octetIndex = 2;
     }
-    return Extension(
-        extnId: id,
-        isCritical: critical,
-        extnValue: ExtensionValue.fromAsn1(
-            ASN1Parser(sequence.elements[octetIndex].contentBytes()!)
-                .nextObject(),
-            id));
+
+    var value = ExtensionValue.fromAsn1(
+      ASN1Parser(sequence.elements[octetIndex].contentBytes()!).nextObject(),
+      id,
+    );
+    if (value is UnknownExtension && critical) {
+      throw UnimplementedError(
+          'Cannot handle critical extension $id (${id.parent} ${id.nodes.last})');
+    }
+
+    return Extension(extnId: id, isCritical: critical, extnValue: value);
   }
 
   @override
@@ -108,8 +112,7 @@ abstract class ExtensionValue {
           return ProxyCertInfo.fromAsn1(obj as ASN1Sequence);
       }
     }
-    throw UnimplementedError(
-        'Cannot handle $id (${id.parent} ${id.nodes.last})');
+    return UnknownExtension(obj, id);
   }
 }
 
@@ -931,4 +934,11 @@ class ProxyPolicy {
   }
 
   ProxyPolicy({required this.policyLanguage, this.policy});
+}
+
+class UnknownExtension extends ExtensionValue {
+  final ASN1Object object;
+  final ObjectIdentifier id;
+
+  UnknownExtension(this.object, this.id);
 }
