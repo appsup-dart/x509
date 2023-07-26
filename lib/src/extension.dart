@@ -1,4 +1,4 @@
-part of x509;
+part of 'x509_base.dart';
 
 /// An X.509 extension
 class Extension {
@@ -44,7 +44,7 @@ class Extension {
         extnId: id,
         isCritical: critical,
         extnValue: ExtensionValue.fromAsn1(
-            ASN1Parser(sequence.elements[octetIndex].contentBytes()!)
+            ASN1Parser(sequence.elements[octetIndex].contentBytes())
                 .nextObject(),
             id));
   }
@@ -316,7 +316,7 @@ class PrivateKeyUsagePeriod extends ExtensionValue {
   factory PrivateKeyUsagePeriod.fromAsn1(ASN1Sequence sequence) {
     DateTime? notBefore;
     DateTime? notAfter;
-    for (ASN1Object o in sequence.elements) {
+    for (var o in sequence.elements) {
       var taggedObject = o;
       if (taggedObject.tag == 128) {
         notBefore = ASN1GeneralizedTime.fromBytes(o.encodedBytes).dateTimeValue;
@@ -352,7 +352,7 @@ class BasicConstraints extends ExtensionValue {
     int? len;
     for (var o in sequence.elements) {
       if (o is ASN1Boolean) {
-        cA = o.booleanValue!;
+        cA = o.booleanValue;
       }
       if (o is ASN1Integer) {
         len = o.intValue;
@@ -613,7 +613,7 @@ class DistributionPointName {
   //   nameRelativeToCRLIssuer [1] RelativeDistinguishedName
   // }
   factory DistributionPointName.fromAsn1(ASN1Object obj) {
-    var choice = (0x1F & obj.tag);
+    var choice = 0x1F & obj.tag;
     var childObj = ASN1Parser(obj.valueBytes()).nextObject();
     GeneralNames? generalNames;
     RelativeDistinguishedName? relativeName;
@@ -776,7 +776,7 @@ class GeneralName {
   factory GeneralName.fromAsn1(ASN1Object obj) {
     var tag = obj.tag;
     var isConstructed = (0xA0 & tag) == 0xA0;
-    var choice = (0x1F & tag);
+    var choice = 0x1F & tag;
     ASN1Object? contents;
     if (isConstructed) {
       contents = ASN1Parser(obj.valueBytes()).nextObject();

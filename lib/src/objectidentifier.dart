@@ -1,4 +1,4 @@
-part of x509;
+part of 'x509_base.dart';
 
 class ObjectIdentifier {
   final List<int> nodes;

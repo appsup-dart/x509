@@ -1,19 +1,18 @@
 // Copyright (c) 2016, rbellens. All rights reserved. Use of this source code
 // is governed by a BSD-style license that can be found in the LICENSE file.
 
-library x509;
-
+import 'dart:convert';
 import 'dart:developer';
+import 'dart:typed_data';
 
 import 'package:asn1lib/asn1lib.dart';
-import 'dart:convert';
-import 'package:quiver/core.dart';
-import 'package:quiver/collection.dart';
-import 'dart:typed_data';
 import 'package:crypto_keys/crypto_keys.dart';
-export 'package:crypto_keys/crypto_keys.dart';
+import 'package:quiver/collection.dart';
+import 'package:quiver/core.dart';
 
 import 'util.dart';
+
+export 'package:crypto_keys/crypto_keys.dart';
 
 part 'certificate.dart';
 part 'extension.dart';
@@ -173,7 +172,7 @@ class PrivateKeyInfo {
         algorithm,
         keyPairFromAsn1(
             ASN1BitString(
-                (sequence.elements[2] as ASN1OctetString).contentBytes()!),
+                (sequence.elements[2] as ASN1OctetString).contentBytes()),
             algorithm.algorithm));
   }
 }
@@ -192,7 +191,7 @@ class EncryptedPrivateKeyInfo {
     final algorithm =
         AlgorithmIdentifier.fromAsn1(sequence.elements[0] as ASN1Sequence);
     return EncryptedPrivateKeyInfo(
-        algorithm, (sequence.elements[1] as ASN1OctetString).contentBytes()!);
+        algorithm, (sequence.elements[1] as ASN1OctetString).contentBytes());
   }
 }
 
@@ -247,8 +246,7 @@ Object _parseDer(List<int> bytes, String? type) {
 }
 
 Iterable parsePem(String pem) sync* {
-  var lines = pem
-      .split('\n')
+  var lines = LineSplitter.split(pem)
       .map((line) => line.trim())
       .where((line) => line.isNotEmpty)
       .toList();

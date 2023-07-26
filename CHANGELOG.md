@@ -1,3 +1,8 @@
+## 0.2.4
+
+- Require Dart 3.0
+- Compatible with asn1lib: ^1.5.0
+
 ## 0.2.3
 
  - **FIX**: parsing certificates containing GeneralizedTime (pull request [#21](https://github.com/appsup-dart/x509/issues/21) from adamgillmore). ([850c55fb](https://github.com/appsup-dart/x509/commit/850c55fb60f4ebf705f5c3f5481635e5a4f498a3))

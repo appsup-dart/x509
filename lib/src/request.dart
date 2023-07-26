@@ -1,4 +1,4 @@
-part of x509;
+part of 'x509_base.dart';
 
 /// https://tools.ietf.org/html/rfc2986
 class CertificationRequest {
@@ -15,7 +15,8 @@ class CertificationRequest {
   ///   signature          BIT STRING
   /// }
   factory CertificationRequest.fromAsn1(ASN1Sequence sequence) {
-    final algorithm = AlgorithmIdentifier.fromAsn1(sequence.elements[1] as ASN1Sequence);
+    final algorithm =
+        AlgorithmIdentifier.fromAsn1(sequence.elements[1] as ASN1Sequence);
     return CertificationRequest(
         CertificationRequestInfo.fromAsn1(sequence.elements[0] as ASN1Sequence),
         algorithm,
