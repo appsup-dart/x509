@@ -44,7 +44,7 @@ class Extension {
         extnId: id,
         isCritical: critical,
         extnValue: ExtensionValue.fromAsn1(
-            ASN1Parser(sequence.elements[octetIndex].contentBytes()!)
+            ASN1Parser(sequence.elements[octetIndex].contentBytes())
                 .nextObject(),
             id));
   }
@@ -359,7 +359,7 @@ class BasicConstraints extends ExtensionValue {
     int? len;
     for (var o in sequence.elements) {
       if (o is ASN1Boolean) {
-        cA = o.booleanValue!;
+        cA = o.booleanValue;
       }
       if (o is ASN1Integer) {
         len = o.intValue;

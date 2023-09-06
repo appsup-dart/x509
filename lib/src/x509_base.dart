@@ -173,7 +173,7 @@ class PrivateKeyInfo {
         algorithm,
         keyPairFromAsn1(
             ASN1BitString(
-                (sequence.elements[2] as ASN1OctetString).contentBytes()!),
+                (sequence.elements[2] as ASN1OctetString).contentBytes()),
             algorithm.algorithm));
   }
 }
@@ -192,7 +192,7 @@ class EncryptedPrivateKeyInfo {
     final algorithm =
         AlgorithmIdentifier.fromAsn1(sequence.elements[0] as ASN1Sequence);
     return EncryptedPrivateKeyInfo(
-        algorithm, (sequence.elements[1] as ASN1OctetString).contentBytes()!);
+        algorithm, (sequence.elements[1] as ASN1OctetString).contentBytes());
   }
 }
 
