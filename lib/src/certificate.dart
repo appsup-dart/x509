@@ -134,7 +134,7 @@ class TbsCertificate {
     if (elements.first.tag == 0xa0) {
       var e =
           ASN1Parser(elements.first.valueBytes()).nextObject() as ASN1Integer;
-      version = e.valueAsBigInteger!.toInt() + 1;
+      version = e.valueAsBigInteger.toInt() + 1;
       elements = elements.skip(1).toList();
     }
     var optionals = elements.skip(6);
@@ -151,7 +151,7 @@ class TbsCertificate {
             sUid = o.contentBytes();
             break;
           case 3:
-            ex = (ASN1Parser(o.contentBytes()!).nextObject() as ASN1Sequence)
+            ex = (ASN1Parser(o.contentBytes()).nextObject() as ASN1Sequence)
                 .elements
                 .map((v) => Extension.fromAsn1(v as ASN1Sequence))
                 .toList();
@@ -161,7 +161,7 @@ class TbsCertificate {
 
     return TbsCertificate(
         version: version,
-        serialNumber: (elements[0] as ASN1Integer).valueAsBigInteger!.toInt(),
+        serialNumber: (elements[0] as ASN1Integer).valueAsBigInteger.toInt(),
         signature: AlgorithmIdentifier.fromAsn1(elements[1] as ASN1Sequence),
         issuer: Name.fromAsn1(elements[2] as ASN1Sequence),
         validity: Validity.fromAsn1(elements[3] as ASN1Sequence),

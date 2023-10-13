@@ -266,6 +266,22 @@ class ObjectIdentifier {
           null: 'dod',
           1: {
             null: 'internet',
+            4: {
+              null: 'private',
+              1: {
+                null: 'enterprise',
+                11129: {
+                  null: 'google',
+                  2: {
+                    null: 'two',
+                    4: {
+                      null: 'four',
+                      2: 'sctList',
+                    },
+                  },
+                },
+              },
+            },
             5: {
               null: 'security',
               5: {

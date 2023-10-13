@@ -36,9 +36,9 @@ KeyPair ecKeyPairFromAsn1(ASN1Sequence sequence) {
     throw UnsupportedError('Only `ecPrivkeyVer1` supported.');
   }
 
-  var privateKey = toBigInt(sequence.elements[1].contentBytes()!);
+  var privateKey = toBigInt(sequence.elements[1].contentBytes());
 
-  var l = sequence.elements[1].contentBytes()!.length;
+  var l = sequence.elements[1].contentBytes().length;
 
   Identifier? curve;
 
@@ -52,7 +52,7 @@ KeyPair ecKeyPairFromAsn1(ASN1Sequence sequence) {
 
   EcPublicKey? publicKey;
   if (sequence.elements.length > i && sequence.elements[i].tag == 0xa1) {
-    var e = ASN1Parser(sequence.elements[i].contentBytes()!).nextObject()
+    var e = ASN1Parser(sequence.elements[i].contentBytes()).nextObject()
         as ASN1BitString;
     // https://tools.ietf.org/html/rfc5480#section-2.2
     // ECPoint ::= OCTET STRING
@@ -98,8 +98,8 @@ KeyPair rsaKeyPairFromAsn1(ASN1Sequence sequence) {
 }
 
 RsaPublicKey rsaPublicKeyFromAsn1(ASN1Sequence sequence) {
-  var modulus = (sequence.elements[0] as ASN1Integer).valueAsBigInteger!;
-  var exponent = (sequence.elements[1] as ASN1Integer).valueAsBigInteger!;
+  var modulus = (sequence.elements[0] as ASN1Integer).valueAsBigInteger;
+  var exponent = (sequence.elements[1] as ASN1Integer).valueAsBigInteger;
   return RsaPublicKey(modulus: modulus, exponent: exponent);
 }
 

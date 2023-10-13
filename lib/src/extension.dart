@@ -66,6 +66,7 @@ class Extension {
 abstract class ExtensionValue {
   static const ceId = ObjectIdentifier([2, 5, 29]);
   static const peId = ObjectIdentifier([1, 3, 6, 1, 5, 5, 7, 1]);
+  static const goog24Id = ObjectIdentifier([1, 3, 6, 1, 4, 1, 11129, 2, 4]);
 
   const ExtensionValue();
 
@@ -110,6 +111,12 @@ abstract class ExtensionValue {
           return QCStatements.fromAsn1(obj as ASN1Sequence);
         case 14:
           return ProxyCertInfo.fromAsn1(obj as ASN1Sequence);
+      }
+    }
+    if (id.parent == goog24Id) {
+      switch (id.nodes.last) {
+        case 2:
+          return SctList.fromAsn1(obj as ASN1OctetString);
       }
     }
     return UnknownExtension(obj, id);
@@ -355,7 +362,7 @@ class BasicConstraints extends ExtensionValue {
     int? len;
     for (var o in sequence.elements) {
       if (o is ASN1Boolean) {
-        cA = o.booleanValue!;
+        cA = o.booleanValue;
       }
       if (o is ASN1Integer) {
         len = o.intValue;
@@ -941,4 +948,8 @@ class UnknownExtension extends ExtensionValue {
   final ObjectIdentifier id;
 
   UnknownExtension(this.object, this.id);
+}
+
+class SctList extends ExtensionValue {
+  SctList.fromAsn1(ASN1OctetString octetString);
 }
