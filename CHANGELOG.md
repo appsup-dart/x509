@@ -18,8 +18,6 @@
  - **FEAT**: support unknown policyidentifier (pull request [#12](https://github.com/appsup-dart/x509/issues/12) from nakajo2011). ([bb76649a](https://github.com/appsup-dart/x509/commit/bb76649a4abfc44a201cea4a66a6d2e4fd2a4187))
  - **DOCS**: add funding info. ([0b2a91ac](https://github.com/appsup-dart/x509/commit/0b2a91ac57acb7a632396fc410bedd8ba6df0aff))
 
-# Changelog
-
 ## 0.2.2
 
 - Compatible with version `0.3.0` of `crypto_keys`
