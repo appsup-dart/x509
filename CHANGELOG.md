@@ -1,3 +1,8 @@
+## 0.2.4
+
+ - **FIX**: parse the 1.3.6.1.4.1.11129.2.4.2 OID used for the SCT list extension. ([9349b174](https://github.com/appsup-dart/x509/commit/9349b174fbce45242bbdef154bc96bde5b20e781))
+ - **FEAT**: allow parsing of unknown extensions if they are non-critical (pull request [#22](https://github.com/appsup-dart/x509/issues/22) from sroddy). ([74b98a9c](https://github.com/appsup-dart/x509/commit/74b98a9c34884ec995646ac5716c81aec807b488))
+
 ## 0.2.3+1
 
  - **FIX**: null-aware warnings (pull request [#25](https://github.com/appsup-dart/x509/issues/25) from faithoflifedev). ([d3f7fcb9](https://github.com/appsup-dart/x509/commit/d3f7fcb9956beefc6f41e67832a824304d09210b))
