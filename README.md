@@ -9,16 +9,17 @@ Dart library for parsing and working with X.509 certificates.
 ## Usage
 
 A simple usage example:
+```dart
 
-    import 'package:x509/x509.dart';
-    import 'dart:io';
+import 'package:x509/x509.dart';
+import 'dart:io';
 
-    main() {
-      var cert = parsePem(new File('cert.pem').readAsStringSync());
+void main() {
+  var cert = parsePem(File('cert.pem').readAsStringSync());
       
-      print(cert);
-    }
-
+  print(cert);
+}
+```
 ## Features and bugs
 
 Please file feature requests and bugs at the [issue tracker][tracker].
