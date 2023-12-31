@@ -1,3 +1,7 @@
+## 0.2.4+2
+
+ - **DOCS**: fix code sample (pull request [#29](https://github.com/appsup-dart/x509/issues/29) from bivens-dev/patch-1). ([14a3a777](https://github.com/appsup-dart/x509/commit/14a3a777afae604e293ee18eb34629c3ef875862))
+
 ## 0.2.4+1
 
  - **FIX**: remove unnecessary null checks. ([fb37bbed](https://github.com/appsup-dart/x509/commit/fb37bbeddd1f76dc027c9b189ea2e016383971c5))
