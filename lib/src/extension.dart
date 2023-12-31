@@ -42,7 +42,7 @@ class Extension {
     }
 
     var value = ExtensionValue.fromAsn1(
-      ASN1Parser(sequence.elements[octetIndex].contentBytes()!).nextObject(),
+      ASN1Parser(sequence.elements[octetIndex].contentBytes()).nextObject(),
       id,
     );
     if (value is UnknownExtension && critical) {
