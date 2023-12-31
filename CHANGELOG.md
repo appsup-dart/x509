@@ -1,3 +1,7 @@
+## 0.2.4+1
+
+ - **FIX**: remove unnecessary null checks. ([fb37bbed](https://github.com/appsup-dart/x509/commit/fb37bbeddd1f76dc027c9b189ea2e016383971c5))
+
 ## 0.2.4
 
  - **FIX**: parse the 1.3.6.1.4.1.11129.2.4.2 OID used for the SCT list extension. ([9349b174](https://github.com/appsup-dart/x509/commit/9349b174fbce45242bbdef154bc96bde5b20e781))
