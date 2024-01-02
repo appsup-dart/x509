@@ -10,43 +10,13 @@ class ObjectIdentifier {
       : null;
 
   factory ObjectIdentifier.fromAsn1(ASN1ObjectIdentifier id) {
-    var bytes = id.valueBytes();
-    var nodes = <int>[];
-    var v = bytes.first;
-    nodes.add(v ~/ 40);
-    nodes.add(v % 40);
-
-    var w = 0;
-    for (var v in bytes.skip(1)) {
-      if (v >= 128) {
-        w += v - 128;
-        w *= 128;
-      } else {
-        w += v;
-        nodes.add(w);
-        w = 0;
-      }
-    }
-
-    return ObjectIdentifier(nodes);
+    // ASN1ObjectIdentifier parameter 'oi' is the same as ObjectIdentifier parameter nodes
+    return ObjectIdentifier(id.oi);
   }
 
   ASN1ObjectIdentifier toAsn1() {
-    var bytes = <int>[];
-    bytes.add(nodes.first * 40 + nodes[1]);
-    for (var v in nodes.skip(2)) {
-      var w = [];
-      while (v > 128) {
-        var u = v % 128;
-        v -= u;
-        v ~/= 128;
-        w.add(u);
-      }
-      w.add(v);
-      bytes.addAll(w.skip(1).toList().reversed.map((v) => v + 128));
-      bytes.add(w.first);
-    }
-    return ASN1ObjectIdentifier(bytes);
+    // ObjectIdentifier parameter 'oi' is the same as ASN1ObjectIdentifier parameter nodes
+    return ASN1ObjectIdentifier(nodes);
   }
 
   @override
